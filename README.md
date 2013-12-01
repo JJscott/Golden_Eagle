@@ -11,7 +11,10 @@ Linux
 
 (Assuming cloned to directory named "Golden_Eagle").
 
+```bash
 cd Golden_Eagle
 cmake .
 make
 ./bin/Golden
+
+```
