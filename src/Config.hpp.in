@@ -1,0 +1,3 @@
+#define Fibreglass_VERSION_MAJOR @Golden_VERSION_MAJOR@
+#define Fibreglass_VERSION_MINOR @Golden_VERSION_MINOR@
+#define Fibreglass_VERSION_MINOR @Golden_VERSION_REV@
