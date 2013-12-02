@@ -6,18 +6,22 @@ CMake stuff is there, I don't know howto use in on Windows, but if someone would
 Building
 ========
 
-@Neo: shouldn't we be building in a './build/' subdirectory instead of in source? - Ben
+Do all building in Golden_Eagle/build so it doesnt pollute the source tree.
+
+@Neo: clean this up when cmake actually works? How do we get GLFW as a nice dependency?
+
+Assuming cloned to directory named "Golden_Eagle".
 
 Linux
 -----
 
-(Assuming cloned to directory named "Golden_Eagle").
-
 ```bash
 cd Golden_Eagle
-cmake .
+mkdir build
+cd build
+cmake ..
 make
-./bin/Golden
+./???/Golden
 
 ```
 
@@ -30,7 +34,9 @@ Windows
 
 ```bat
 cd Golden_Eagle
-cmake . -G "Visual Studio 12"
+mkdir build
+cd build
+cmake .. -G "Visual Studio 12"
 ```
 
 - you now have a VS2013 solution
