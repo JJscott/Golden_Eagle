@@ -35,6 +35,11 @@ cd build
 cmake .. -G "Visual Studio 12"
 ```
 
-- You now have a VS2013 solution
+- Or for x64, substitute:
 
-- You will need to select the correct startup project, by right clicking and choosing set as startup project in the context menu.
+```bat
+cmake .. -G "Visual Studio 12 Win64"
+```
+
+- You now have a VS2013 solution
+- You will need to select the correct startup project, by right clicking on 'Golden' and choosing set as startup project.
