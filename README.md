@@ -3,14 +3,16 @@ Golden Eagle
 
 CMake stuff is there, I don't know howto use in on Windows, but if someone would try and document exactly how to do it here, that'd be create.
 
+Notes
+=====
+
+Neo cleaned Linux instructions @ 18:40.
+GLFW stuff incoming.
+
 Building
 ========
 
-Do all building in Golden_Eagle/build so it doesnt pollute the source tree.
-
-@Neo: clean this up when cmake actually works? How do we get GLFW as a nice dependency?
-
-Assuming cloned to directory named "Golden_Eagle".
+Note: Assuming cloned to directory named "Golden_Eagle".
 
 Linux
 -----
@@ -21,7 +23,7 @@ mkdir build
 cd build
 cmake ..
 make
-./???/Golden
+./bin/Golden
 
 ```
 
