@@ -20,8 +20,6 @@ include_directories("${PROJECT_BINARY_DIR}")
 include(FindOpenGL REQUIRED)
 include(FindGLEW REQUIRED)
 include_directories(${OPENGL_INCLUDE_DIR})
-include_directories(${GLEW_INCLUDE_DIR})
 
 target_link_libraries(Golden glfw3 ${GLFW_LIBRARIES})
-target_link_libraries(Golden GLEW ${GLEW_LIBRARIES})
 

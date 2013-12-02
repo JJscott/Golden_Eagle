@@ -1,0 +1,1 @@
+/usr/bin/c++       CMakeFiles/Golden.dir/main.cpp.o  -o ../bin/Golden -rdynamic -lglfw3 -lX11 -lpthread -lXrandr -lXi -lXxf86vm -lrt -lm -lGL 
