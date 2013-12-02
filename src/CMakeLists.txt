@@ -18,8 +18,9 @@ add_custom_command(TARGET Golden PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy_dire
 include_directories("${PROJECT_BINARY_DIR}")
 
 include(FindOpenGL REQUIRED)
-include(FindGLEW REQUIRED)
 include_directories(${OPENGL_INCLUDE_DIR})
 
-target_link_libraries(Golden glfw3 ${GLFW_LIBRARIES})
+add_subdirectory(${CMAKE_SOURCE_DIR}/ext/glfw-3.0.3 "${CMAKE_BINARY_DIR}/bin/cmake")
+include_directories(${CMAKE_SOURCE_DIR}/ext/glfw-3.0.3/include)
+target_link_libraries(Golden glfw ${GLFW_LIBRARIES})
 
