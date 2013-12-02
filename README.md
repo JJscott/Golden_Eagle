@@ -7,7 +7,7 @@ Notes
 =====
 
 Neo cleaned Linux instructions @ 18:40.
-GLFW stuff incoming.
+Neo added GLFW autobuild and autolink @ 20:04.
 
 Building
 ========
