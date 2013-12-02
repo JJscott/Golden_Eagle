@@ -27,8 +27,10 @@ Windows
 - Install cmake for Windows (win32 installer from http://www.cmake.org/cmake/resources/software.html)
 - Add cmake to your path if it doesn't
 - from cmd.exe:
+
 ```bat
 cd Golden_Eagle
 cmake . -G "Visual Studio 12"
 ```
+
 - you now have a VS2013 solution
