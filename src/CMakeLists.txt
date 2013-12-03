@@ -9,8 +9,6 @@ include_directories(${OPENGL_INCLUDE_DIR})
 add_subdirectory(${CMAKE_SOURCE_DIR}/ext/glfw-3.0.3 "${CMAKE_BINARY_DIR}/bin/cmake")
 include_directories(${CMAKE_SOURCE_DIR}/ext/glfw-3.0.3/include)
 
-include_directories("${PROJECT_BINARY_DIR}")
-
 if(MSVC)
   # Force to always compile with W4
   if(CMAKE_CXX_FLAGS MATCHES "/W[0-4]")
@@ -20,11 +18,14 @@ if(MSVC)
   endif()
 elseif(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
   # Update if necessary
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-long-long -pedantic")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic -std=c++11")
 endif()
 
-file(GLOB ge_src "game/*.cpp")
-add_executable(game ${ge_src})
+include_directories("${CMAKE_SOURCE_DIR}/src")
+
+file(GLOB game_src "game/*.cpp")
+file(GLOB game_header "game/*.hpp")
+add_executable(game ${game_src} ${game_header})
 set_target_properties( game
     PROPERTIES
     ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
@@ -35,8 +36,9 @@ set_target_properties( game
 add_custom_command(TARGET game PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/res $<TARGET_FILE_DIR:game>/res)
 target_link_libraries(game glfw ${GLFW_LIBRARIES})
 
-file(GLOB se_src "server/*.cpp")
-add_executable(server ${se_src})
+file(GLOB server_src "server/*.cpp")
+file(GLOB server_header "server/*.hpp")
+add_executable(server ${server_src})
 set_target_properties( server
     PROPERTIES
     ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
