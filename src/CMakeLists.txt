@@ -23,30 +23,7 @@ endif()
 
 include_directories("${CMAKE_SOURCE_DIR}/src")
 
-source_group(common FILES "common/*.cpp" "common/*.hpp" "common/*.h" "common/*.c")
+add_subdirectory("./common")
+add_subdirectory("./server")
+add_subdirectory("./game")
 
-file(GLOB game_src "game/*.cpp")
-file(GLOB game_header "game/*.hpp")
-add_executable(game ${game_src} ${game_header} ${common})
-set_target_properties( game
-    PROPERTIES
-    ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
-    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
-    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
-)
-
-add_custom_command(TARGET game PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/res $<TARGET_FILE_DIR:game>/res)
-target_link_libraries(game glfw ${GLFW_LIBRARIES})
-
-file(GLOB server_src "server/*.cpp")
-file(GLOB server_header "server/*.hpp")
-add_executable(server ${server_src} ${server_header} ${common})
-set_target_properties( server
-    PROPERTIES
-    ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
-    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
-    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
-)
-
-add_custom_command(TARGET server PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/res $<TARGET_FILE_DIR:server>/res)
-target_link_libraries(server glfw ${GLFW_LIBRARIES})
