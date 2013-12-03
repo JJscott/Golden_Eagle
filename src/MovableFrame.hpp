@@ -1,5 +1,5 @@
-#ifndef __MOVABLEFRAME
-#define __MOVABLEFRAME
+#ifndef MOVABLEFRAME_HPP
+#define MOVABLEFRAME_HPP
 
 #include "Initial3D.hpp"
 #include "Frame.hpp"

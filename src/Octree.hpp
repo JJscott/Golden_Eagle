@@ -7,8 +7,8 @@
  * @author Ben Allen
  */
 
-#ifndef INITIAL3D_OCTREE_H
-#define INITIAL3D_OCTREE_H
+#ifndef INITIAL3D_OCTREE_HPP
+#define INITIAL3D_OCTREE_HPP
 
 #include <cassert>
 #include <iostream>

@@ -1,5 +1,5 @@
-#ifndef __FRAME
-#define __FRAME
+#ifndef FRAME_HPP
+#define FRAME_HPP
 
 #include "Initial3D.hpp"
 

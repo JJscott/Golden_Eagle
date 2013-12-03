@@ -1,5 +1,5 @@
-#ifndef __SCENE
-#define __SCENE
+#ifndef SCENE_HPP
+#define SCENE_HPP
 
 #include "Entity.hpp"
 #include <vector>

@@ -20,8 +20,8 @@
  *
  */
 
-#ifndef INITIAL3D_H
-#define INITIAL3D_H
+#ifndef INITIAL3D_HPP
+#define INITIAL3D_HPP
 
 #include <cstdlib>
 #include <cassert>
@@ -74,124 +74,6 @@ namespace initial3d {
 		Uncopyable & operator=(const Uncopyable &);
 	protected:
 		Uncopyable() { }
-	};
-	
-	// C++ port of Java's Random
-	// http://docs.oracle.com/javase/6/docs/api/java/util/Random.html
-	class random {
-	public:
-		typedef unsigned long long seed_t;
-	
-	private:
-		seed_t m_seed;
-		double m_nextNextGaussian;
-		bool m_haveNextNextGaussian;
-		
-	public:
-		// using default copy constructor and assignment
-		
-		inline void setSeed(seed_t seed) {
-			m_seed = (seed ^ 0x5DEECE66DLL) & ((1LL << 48) - 1LL);
-		}
-		
-		// constructor that auto-generates a seed
-		inline random() : m_haveNextNextGaussian(false) {
-			assert(sizeof(seed_t) >= 8);
-			seed_t t = std::time(NULL);
-			seed_t c = std::clock();
-			// FIXME do this better?
-			setSeed((t * 1000LL) + ((c * 1000LL / CLOCKS_PER_SEC) % 1000LL));
-		}
-		
-		// constructor that takes a seed
-		inline random(seed_t seed_) : m_haveNextNextGaussian(false) {
-			assert(sizeof(seed_t) >= 8);
-			setSeed(seed_);
-		}
-		
-		// generate some random bits, up to 32
-		inline seed_t next(int bits) {
-			assert(bits >= 1 && bits <= 32);
-			m_seed = (m_seed * 0x5DEECE66DLL + 0xBLL) & ((1LL << 48) - 1LL);
-			return m_seed >> (48 - bits);
-		}
-		
-		// generate random bytes
-		void nextBytes(void *bytes_, int len) {
-			unsigned char *bytes = (unsigned char *) bytes_;
-			for (unsigned char *end = bytes + len; bytes < end; ) {
-				unsigned int rnd = nextInt<int>();
-				int n = (unsigned int)sizeof(int) <= (end - bytes) ? sizeof(int) : (end - bytes);
-				for (; n --> 0; rnd >>= CHAR_BIT) {
-					*(bytes++) = rnd;
-				}
-			}
-		}
-		
-		// next integral type (short, int, long etc)
-		template <typename T>
-		inline T nextInt() {
-			int bits = sizeof(T) * CHAR_BIT;
-			T res = 0;
-			for (; bits > 32; bits -= 32) {
-				res <<= 32;
-				res += static_cast<T>(next(32));
-			}
-			res <<= bits;
-			res += static_cast<T>(next(bits));
-			return res;
-		}
-		
-		// next int in range 0 <= x < n
-		inline unsigned int nextInt(unsigned int n) {
-			assert(sizeof(seed_t) >= 2 * sizeof(int));
-			if (n == 0) return 0;
-			if ((n & (~n + 1)) == n) {
-				// i.e., n is a power of 2
-				return (unsigned int)((n * seed_t(nextInt<unsigned int>())) >> (sizeof(int) * CHAR_BIT));
-			}
-			unsigned int bits, val;
-			do {
-				bits = nextInt<unsigned int>();
-				val = bits % n;
-			} while (bits - val + (n-1) < 0);
-			return val;
-		}
-		
-		// next boolean
-		inline bool nextBool() {
-			return next(1) > 0;
-		}
-		
-		// next single precision float
-		inline float nextFloat() {
-			return next(24) / float(1LL << 24);
-		}
-		
-		// next double precision float
-		inline double nextDouble() {
-			return ((next(26) << 27) + next(27)) / double(1LL << 53);
-		}
-		
-		// next gaussian "normally" distributed double, mean 0 and std dev 1
-		inline double nextGaussian() {
-			if (m_haveNextNextGaussian) {
-				m_haveNextNextGaussian = false;
-				return m_nextNextGaussian;
-			} else {
-				double v1, v2, s;
-				do {
-					v1 = 2 * nextDouble() - 1;
-					v2 = 2 * nextDouble() - 1;
-					s = v1 * v1 + v2 * v2;
-				} while (s >= 1 || s == 0);
-				double multiplier = std::sqrt(-2 * std::log(s) / s);
-				m_nextNextGaussian = v2 * multiplier;
-				m_haveNextNextGaussian = true;
-				return v1 * multiplier;
-			}
-		}
-	
 	};
 	
 	namespace math {
