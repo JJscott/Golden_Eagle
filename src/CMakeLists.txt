@@ -18,14 +18,16 @@ if(MSVC)
   endif()
 elseif(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
   # Update if necessary
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic -std=c++11")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-long-long -pedantic -std=c++11")
 endif()
 
 include_directories("${CMAKE_SOURCE_DIR}/src")
 
+source_group(common FILES "common/*.cpp" "common/*.hpp" "common/*.h" "common/*.c")
+
 file(GLOB game_src "game/*.cpp")
 file(GLOB game_header "game/*.hpp")
-add_executable(game ${game_src} ${game_header})
+add_executable(game ${game_src} ${game_header} ${common})
 set_target_properties( game
     PROPERTIES
     ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
@@ -38,7 +40,7 @@ target_link_libraries(game glfw ${GLFW_LIBRARIES})
 
 file(GLOB server_src "server/*.cpp")
 file(GLOB server_header "server/*.hpp")
-add_executable(server ${server_src})
+add_executable(server ${server_src} ${server_header} ${common})
 set_target_properties( server
     PROPERTIES
     ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
