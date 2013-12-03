@@ -1,12 +1,12 @@
 #ifndef __MOVABLEFRAME
 #define __MOVABLEFRAME
 
+#include "Initial3D.hpp"
 #include "Frame.hpp"
-#include "Vector3.hpp"
 
 class MovableFrame : public Frame {
 private:
-	Vector3 Position;
+	vec3 *Position;
 };
 
 #endif
