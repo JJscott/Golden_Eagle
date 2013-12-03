@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "Scene.hpp"
+#include "common/test.hpp"
 
 static void error_callback(int error, const char* description)
 {
@@ -16,6 +17,10 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 }
 int main(void)
 {
+    test();
+    printf("test, test, test\n");
+    test();
+
     GLFWwindow* window;
     glfwSetErrorCallback(error_callback);
     if (!glfwInit())

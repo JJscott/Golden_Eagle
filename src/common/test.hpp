@@ -2,5 +2,5 @@
 #include <cstdlib>
 
 void test() {
-	printf("TESTING, testing, 123!");
+	printf("TESTING, testing, 123!\n");
 }
