@@ -121,7 +121,7 @@ namespace initial3d {
 			unsigned char *bytes = (unsigned char *) bytes_;
 			for (unsigned char *end = bytes + len; bytes < end; ) {
 				unsigned int rnd = nextInt<int>();
-				int n = sizeof(int) <= (end - bytes) ? sizeof(int) : (end - bytes);
+				int n = (unsigned int)sizeof(int) <= (end - bytes) ? sizeof(int) : (end - bytes);
 				for (; n --> 0; rnd >>= CHAR_BIT) {
 					*(bytes++) = rnd;
 				}
