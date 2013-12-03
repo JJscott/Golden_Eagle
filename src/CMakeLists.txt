@@ -3,17 +3,11 @@ configure_file (
 	"${PROJECT_BINARY_DIR}/Config.hpp"
 )
 
-file(GLOB ge_src "*.cpp")
+include(FindOpenGL REQUIRED)
+include_directories(${OPENGL_INCLUDE_DIR})
 
-add_executable(Golden ${ge_src})
-set_target_properties( Golden
-    PROPERTIES
-    ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
-    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
-    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
-)
-
-add_custom_command(TARGET Golden PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/res $<TARGET_FILE_DIR:Golden>/res)
+add_subdirectory(${CMAKE_SOURCE_DIR}/ext/glfw-3.0.3 "${CMAKE_BINARY_DIR}/bin/cmake")
+include_directories(${CMAKE_SOURCE_DIR}/ext/glfw-3.0.3/include)
 
 include_directories("${PROJECT_BINARY_DIR}")
 
@@ -29,11 +23,26 @@ elseif(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-long-long -pedantic")
 endif()
 
+file(GLOB ge_src "game/*.cpp")
+add_executable(game ${ge_src})
+set_target_properties( game
+    PROPERTIES
+    ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
+    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
 
-include(FindOpenGL REQUIRED)
-include_directories(${OPENGL_INCLUDE_DIR})
+add_custom_command(TARGET game PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/res $<TARGET_FILE_DIR:game>/res)
+target_link_libraries(game glfw ${GLFW_LIBRARIES})
 
-add_subdirectory(${CMAKE_SOURCE_DIR}/ext/glfw-3.0.3 "${CMAKE_BINARY_DIR}/bin/cmake")
-include_directories(${CMAKE_SOURCE_DIR}/ext/glfw-3.0.3/include)
-target_link_libraries(Golden glfw ${GLFW_LIBRARIES})
+file(GLOB se_src "server/*.cpp")
+add_executable(server ${se_src})
+set_target_properties( server
+    PROPERTIES
+    ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
+    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
 
+add_custom_command(TARGET server PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/res $<TARGET_FILE_DIR:server>/res)
+target_link_libraries(server glfw ${GLFW_LIBRARIES})
