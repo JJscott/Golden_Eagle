@@ -1,10 +1,10 @@
-#include "GLee.h"
-#include "Initial3D.hpp"
-#include <GLFW/glfw3.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include "GLee.h"
+#include <GLFW/glfw3.h>
+
+#include "Initial3D.hpp"
 #include "Scene.hpp"
-#include "common/test.hpp"
 
 static void error_callback(int error, const char* description)
 {
@@ -17,10 +17,6 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 }
 int main(void)
 {
-    test();
-    printf("test, test, test\n");
-    test();
-
     GLFWwindow* window;
     glfwSetErrorCallback(error_callback);
     if (!glfwInit())

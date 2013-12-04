@@ -1,7 +1,10 @@
-#include "common/test.hpp"
+#include <cstdio>
+#include <cstdlib>
+
+#include "common/Logger.hpp"
 
 int main() {
-	test();
-
-	return 0;
+	Logger log;
+	log.addOutputStream(std::cout);
+	log << "Server starting" << std::endl;
 }
