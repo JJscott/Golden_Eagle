@@ -1,7 +1,8 @@
 Golden Eagle
 ============
 
-CMake stuff is there, I don't know howto use in on Windows, but if someone would try and document exactly how to do it here, that'd be create.
+Instructions 
+
 
 Building
 ========
@@ -42,4 +43,4 @@ cmake .. -G "Visual Studio 12 Win64"
 ```
 
 - You now have a VS2013 solution
-- You will need to select the correct startup project, by right clicking on 'Golden' and choosing set as startup project.
+- In VS set 'game' as the startup project (right click on 'game' -> Set as StartUp Project)
