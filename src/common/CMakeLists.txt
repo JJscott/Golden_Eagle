@@ -1,5 +1,5 @@
-file(GLOB common_src "*.cpp")
-file(GLOB common_header "*.hpp")
+file(GLOB common_src "*.cpp" "*.c")
+file(GLOB common_header "*.hpp" "*.h")
 add_library(common ${common_src} ${common_header})
 
 set_target_properties( common
