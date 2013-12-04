@@ -1,5 +1,7 @@
-#include <stdlib.h>
-#include <stdio.h>
+#include <cstdlib>
+#include <cstdio>
+#include <iostream>
+
 #include "GLee.h"
 #include <GLFW/glfw3.h>
 
@@ -7,15 +9,17 @@
 #include "SceneRoot.hpp"
 #include "TriangleEntity.hpp"
 
-static void error_callback(int error, const char* description)
-{
+using namespace std;
+
+static void error_callback(int error, const char* description) {
     fputs(description, stderr);
 }
-static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
-{
+
+static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         glfwSetWindowShouldClose(window, GL_TRUE);
 }
+
 int main(void)
 {
     TriangleEntity myEntity;
@@ -33,7 +37,12 @@ int main(void)
         exit(EXIT_FAILURE);
     }
     glfwMakeContextCurrent(window);
-    glfwSetKeyCallback(window, key_callback);
+
+	if (!GLEE_VERSION_1_2) {
+		cout << "DO SOMETHING!" << endl;
+	}
+
+	glfwSetKeyCallback(window, key_callback);
     while (!glfwWindowShouldClose(window))
     {
         float ratio;

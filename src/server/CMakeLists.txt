@@ -1,5 +1,5 @@
-file(GLOB server_src "*.cpp")
-file(GLOB server_header "*.hpp")
+file(GLOB server_src "*.cpp" "*.c")
+file(GLOB server_header "*.hpp" "*.h")
 
 add_executable(server ${server_src} ${server_header})
 
