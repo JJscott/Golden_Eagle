@@ -43,4 +43,4 @@ cmake .. -G "Visual Studio 12 Win64"
 ```
 
 - You now have a VS2013 solution
-- In VS set 'game' as the startup project (right click on 'game' -> Set as StartUp Project.
+- In VS set 'game' as the startup project (right click on 'game' -> Set as StartUp Project)
