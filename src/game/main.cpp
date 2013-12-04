@@ -4,7 +4,7 @@
 #include <GLFW/glfw3.h>
 
 #include "Initial3D.hpp"
-#include "Scene.hpp"
+#include "SceneNode.hpp"
 
 static void error_callback(int error, const char* description)
 {
