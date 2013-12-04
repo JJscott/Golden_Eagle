@@ -8,7 +8,12 @@
 #include "Initial3D.hpp"
 #include "SceneNode.hpp"
 
+#include "common/Log.hpp"
+#include "SceneNode.hpp"
+
 using namespace std;
+
+using namespace ambition;
 
 static void error_callback(int error, const char* description) {
     fputs(description, stderr);
@@ -20,6 +25,13 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 }
 
 int main(void) {
+
+	log("System") % Log::idgaf << "Starting...";
+	Log::getStandardOut()->setMinLevel(Log::error);
+	log() << "gaaaaaaaaaarrrrrrrrrrrhhhhhhhhh";
+	log("SceneManager") % Log::critical << "GPU is dead";
+	log() % Log::nope << "NONONONONONONONOOoooooooooooooo";
+
     GLFWwindow* window;
     glfwSetErrorCallback(error_callback);
     if (!glfwInit())
