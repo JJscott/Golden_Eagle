@@ -1,11 +1,12 @@
 #ifndef FRAME_HPP
 #define FRAME_HPP
 
+#include "SceneNode.hpp"
 #include "Initial3D.hpp"
 
 class vec3;
 
-class Frame {
+class Frame : virtual public SceneNode {
 private:
 public:
 	const Frame *parent;

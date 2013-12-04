@@ -6,7 +6,8 @@
 #include <GLFW/glfw3.h>
 
 #include "Initial3D.hpp"
-#include "SceneNode.hpp"
+#include "SceneRoot.hpp"
+#include "TriangleEntity.hpp"
 
 #include "common/Log.hpp"
 #include "SceneNode.hpp"
@@ -31,6 +32,10 @@ int main(void) {
 	log() << "gaaaaaaaaaarrrrrrrrrrrhhhhhhhhh";
 	log("SceneManager") % Log::critical << "GPU is dead";
 	log() % Log::nope << "NONONONONONONONOOoooooooooooooo";
+
+	TriangleEntity myEntity;
+
+    rootScene.addChildNode(myEntity);
 
     GLFWwindow* window;
     glfwSetErrorCallback(error_callback);
