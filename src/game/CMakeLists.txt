@@ -10,5 +10,17 @@ set_target_properties( game
 )
 
 include_directories("${CMAKE_BINARY_DIR}/lib")
+
+if(CMAKE_HOST_WIN32)
+# make windows symlink to res
+# TODO this requires vista / 7 / newer, identify older windows?
+add_custom_command(TARGET game PRE_BUILD COMMAND cmd /S /C \" \"${CMAKE_SOURCE_DIR}/winshit/reslink.bat\" \"$<TARGET_FILE_DIR:game>/res\" \"${CMAKE_SOURCE_DIR}/res\" \")
+elseif(CMAKE_HOST_UNIX)
+# TODO make unix symlink to res
+
+else()
+# just copy the res dir instead
 add_custom_command(TARGET game PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/res $<TARGET_FILE_DIR:game>/res)
+endif()
+
 target_link_libraries(game glfw common ${GLFW_LIBRARIES})
