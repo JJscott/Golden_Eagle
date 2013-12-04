@@ -71,4 +71,5 @@ SceneNode* SceneNode::getChildNodeByName(const char* searchName) {
 		}
 	}
 	return ret;
+
 }
