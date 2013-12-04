@@ -4,7 +4,8 @@
 #include <GLFW/glfw3.h>
 
 #include "Initial3D.hpp"
-#include "SceneNode.hpp"
+#include "SceneRoot.hpp"
+#include "TriangleEntity.hpp"
 
 static void error_callback(int error, const char* description)
 {
@@ -17,6 +18,10 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 }
 int main(void)
 {
+    TriangleEntity myEntity;
+
+    rootScene.addChildNode(myEntity);
+
     GLFWwindow* window;
     glfwSetErrorCallback(error_callback);
     if (!glfwInit())
