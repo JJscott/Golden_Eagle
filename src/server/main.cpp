@@ -1,10 +1,10 @@
 #include <cstdio>
 #include <cstdlib>
 
-#include "common/Logger.hpp"
+// #include "common/Logger.hpp"
 
 int main() {
-	Logger log;
-	log.addOutputStream(std::cout);
-	log << "Server starting" << std::endl;
+	// Logger log;
+	// log.addOutputStream(std::cout);
+	// log << "Server starting" << std::endl;
 }
