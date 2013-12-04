@@ -3,8 +3,11 @@
 
 #include "Entity.hpp"
 
-class TriangleEntity : Entity {
+class TriangleEntity : public Entity {
+public:
+	void draw() {
 
+	}
 };
 
 #endif

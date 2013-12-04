@@ -5,7 +5,7 @@
 
 class Entity : public MovableFrame {
 public:
-	virtual void Draw() = 0;
+	virtual void draw() = 0;
 };
 
 #endif

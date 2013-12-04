@@ -35,7 +35,7 @@ int main(void) {
 
 	TriangleEntity myEntity;
 
-    rootScene.addChildNode(myEntity);
+    rootScene.addChildNode(&myEntity);
 
     GLFWwindow* window;
     glfwSetErrorCallback(error_callback);

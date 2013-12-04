@@ -5,7 +5,7 @@ class SceneNode;
 
 #include "SceneNode.hpp"
 
-class SceneRoot : SceneNode {
+class SceneRoot : public SceneNode {
 	public:
 		const bool isRootNode() const {
 			return true;

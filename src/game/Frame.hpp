@@ -8,9 +8,16 @@ class vec3;
 
 class Frame : virtual public SceneNode {
 private:
+	vec3* position;
 public:
-	const Frame *parent;
-	virtual vec3 getPosition() =0;
+
+	const bool isRootNode() const {
+		return true;
+	}
+
+	vec3* getPosition() {
+		return this->position;
+	}
 };
 
 #endif
