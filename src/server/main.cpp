@@ -1,10 +1,15 @@
 #include <cstdio>
 #include <cstdlib>
 
-// #include "common/Logger.hpp"
+#include "common/Log.hpp"
+#include "common/Config.hpp"
+
+using namespace ambition;
 
 int main() {
-	// Logger log;
-	// log.addOutputStream(std::cout);
-	// log << "Server starting" << std::endl;
+	Config conf("server.conf");
+	
+	log("System") % Log::idgaf << "Starting...";	
+	Log::getStandardOut()->setMinLevel(Log::error);
+	log("ConfigTest") % Log::idgaf << conf.get("test", "abc");
 }

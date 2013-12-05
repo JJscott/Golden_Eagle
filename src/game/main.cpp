@@ -10,6 +10,7 @@
 #include "TriangleEntity.hpp"
 
 #include "common/Log.hpp"
+#include "common/Config.hpp"
 #include "SceneNode.hpp"
 
 using namespace std;

@@ -1,5 +1,6 @@
 file(GLOB game_src "*.cpp" "*.c")
 file(GLOB game_header "*.hpp" "*.h")
+
 add_executable(game ${game_src} ${game_header})
 
 set_target_properties( game
