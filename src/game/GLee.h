@@ -53,8 +53,39 @@
 #endif
 
 #ifdef _WIN32
-	#define WIN32_LEAN_AND_MEAN
-	#include <windows.h>
+	//#define WIN32_LEAN_AND_MEAN
+	//#include <windows.h>
+
+	//
+	// Begin modifications to build without windows.h
+	//
+
+	// For gl.h
+	#define APIENTRY __stdcall
+	#define WINGDIAPI __declspec(dllimport)
+	// For glu.h
+	#define CALLBACK __stdcall
+	// For GLee.h
+	typedef void VOID, *LPVOID, *HANDLE;
+	typedef char CHAR;
+	typedef long LONG;
+	typedef int BOOL;
+	typedef int INT;
+	typedef unsigned int UINT;
+	typedef float FLOAT;
+	typedef unsigned __int16 USHORT;
+	typedef unsigned __int32 DWORD;
+	typedef signed __int32 INT32;
+	typedef signed __int64 INT64;
+	typedef struct _RECT { LONG left; LONG top; LONG right; LONG bottom; } RECT, *PRECT;
+	#define DECLARE_HANDLE(name) struct name##__ { int unused; }; typedef struct name##__ *name
+	DECLARE_HANDLE(HDC);
+	DECLARE_HANDLE(HGLRC);
+
+	//
+	// End modifications
+	//
+
 	#include <GL/gl.h>
 #elif defined(__APPLE__) || defined(__APPLE_CC__)
     #define GL_GLEXT_LEGACY
