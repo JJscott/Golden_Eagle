@@ -115,7 +115,7 @@ namespace ambition {
 			ss << " [" << std::setw(15) << source << "] ";
 			ss << std::setw(11) << s_level_names[level] << " : ";
 			ss << msg;
-			ss << std::endl;
+			ss << '\n';
 
 			// write to stdout
 			s_cout->write(level, ss.str());
@@ -173,6 +173,7 @@ namespace ambition {
 			}
 			cout << str;
 			cout << termcolor::ColorOff;
+			cout.flush();
 		}
 
 	public:
