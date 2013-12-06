@@ -9,36 +9,35 @@
 #include <unordered_set>
 #include <chrono>
 #include <ctime>
-#include <cstdio>
 
 namespace ambition {
 
 	namespace termcolor {
 
-		// Unix Terminal Colors
+		// Terminal Color Manipulators (use these like std::endl on std::cout and std::cerr)
 
 		// Reset Color
-		extern const char *ColorOff;
+		std::ostream & reset(std::ostream &);
 		
 		// Regular Colors
-		extern const char *Black;
-		extern const char *Red;
-		extern const char *Green;
-		extern const char *Yellow;
-		extern const char *Blue;
-		extern const char *Purple;
-		extern const char *Cyan;
-		extern const char *White;
+		std::ostream & black(std::ostream &);
+		std::ostream & red(std::ostream &);
+		std::ostream & green(std::ostream &);
+		std::ostream & yellow(std::ostream &);
+		std::ostream & blue(std::ostream &);
+		std::ostream & purple(std::ostream &);
+		std::ostream & cyan(std::ostream &);
+		std::ostream & white(std::ostream &);
 		
 		// Bold Colors
-		extern const char *BBlack;
-		extern const char *BRed;
-		extern const char *BGreen;
-		extern const char *BYellow;
-		extern const char *BBlue;
-		extern const char *BPurple;
-		extern const char *BCyan;
-		extern const char *BWhite;
+		std::ostream & boldBlack(std::ostream &);
+		std::ostream & boldRed(std::ostream &);
+		std::ostream & boldGreen(std::ostream &);
+		std::ostream & boldYellow(std::ostream &);
+		std::ostream & boldBlue(std::ostream &);
+		std::ostream & boldPurple(std::ostream &);
+		std::ostream & boldCyan(std::ostream &);
+		std::ostream & boldWhite(std::ostream &);
 
 	}
 
@@ -54,7 +53,7 @@ namespace ambition {
 		virtual void write_impl(unsigned level, const std::string &str) = 0;
 
 	public:
-		LogOutput() { }
+		LogOutput(bool mute_ = false) : m_mute(mute_) { }
 
 		inline unsigned getMinLevel() {
 			return m_min_level;
@@ -89,7 +88,10 @@ namespace ambition {
 		static const char * const s_level_names[];
 
 		static std::unordered_set<LogOutput *> * s_outputs;
+
+		// cout starts muted, cerr starts non-muted
 		static LogOutput * const s_cout;
+		static LogOutput * const s_cerr;
 
 	public:
 		static const unsigned information = 0;
@@ -100,7 +102,7 @@ namespace ambition {
 		static const unsigned idgaf = 5;
 		static const unsigned max = idgaf;
 
-		static void write(unsigned level, const std::string &source, const std::string &msg) {
+		static inline void write(unsigned level, const std::string &source, const std::string &msg) {
 			level = level > max ? max : level;
 			// TODO better format maybe?
 			// Wed May 30 12:25:03 2012 [System] Error : IT BROEK
@@ -117,7 +119,8 @@ namespace ambition {
 			ss << msg;
 			ss << '\n';
 
-			// write to stdout
+			// write to stderr and stdout
+			s_cerr->write(level, ss.str());
 			s_cout->write(level, ss.str());
 
 			// write to all others
@@ -126,16 +129,20 @@ namespace ambition {
 			}
 		}
 
-		static void addOutput(LogOutput *out) {
+		static inline void addOutput(LogOutput *out) {
 			s_outputs->insert(out);
 		}
 
-		static void removeOutput(LogOutput *out) {
+		static inline void removeOutput(LogOutput *out) {
 			s_outputs->erase(out);
 		}
 
-		static LogOutput * getStandardOut() {
+		static inline LogOutput * getStandardOut() {
 			return s_cout;
+		}
+
+		static inline LogOutput * getStandardErr() {
+			return s_cerr;
 		}
 
 	};
@@ -149,35 +156,40 @@ namespace ambition {
 			(*m_out) << str;
 		}
 
-	public:
-		explicit inline StreamLogOutput(std::ostream *out_) : m_out(out_) { }
-	};
-
-	class CoutLogOutput : public StreamLogOutput {
-	protected:
-		virtual void write_impl(unsigned level, const std::string &str) override {
-			using namespace std;
-			switch (level) {
-			case Log::warning:
-				cout << termcolor::Yellow; break;
-			case Log::error:
-				cout << termcolor::BRed; break;
-			case Log::critical:
-				cout << termcolor::Red; break;
-			case Log::nope:
-				cout << termcolor::Purple; break;
-			case Log::idgaf:
-				cout << termcolor::Blue; break;
-			default:
-				cout << termcolor::ColorOff;
-			}
-			cout << str;
-			cout << termcolor::ColorOff;
-			cout.flush();
+		inline std::ostream *getStream() {
+			return m_out;
 		}
 
 	public:
-		explicit inline CoutLogOutput() : StreamLogOutput(&std::cout) { }
+		explicit inline StreamLogOutput(std::ostream *out_, bool mute_ = false) : LogOutput(mute_), m_out(out_) { }
+	};
+
+	class ColoredStreamLogOutput : public StreamLogOutput {
+	protected:
+		virtual void write_impl(unsigned level, const std::string &str) override {
+			std::ostream &out = *getStream();
+			using namespace std;
+			switch (level) {
+			case Log::warning:
+				out << termcolor::yellow; break;
+			case Log::error:
+				out << termcolor::boldRed; break;
+			case Log::critical:
+				out << termcolor::red; break;
+			case Log::nope:
+				out << termcolor::purple; break;
+			case Log::idgaf:
+				out << termcolor::blue; break;
+			default:
+				out << termcolor::reset;
+			}
+			out << str;
+			out << termcolor::reset;
+			out.flush();
+		}
+
+	public:
+		explicit inline ColoredStreamLogOutput(std::ostream *out_, bool mute_ = false) : StreamLogOutput(out_, mute_) { }
 	};
 
 	class FileLogOutput : public StreamLogOutput {
@@ -186,7 +198,7 @@ namespace ambition {
 		std::ofstream m_out;
 
 	public:
-		explicit inline FileLogOutput(const std::string &fname_, std::ios_base::openmode mode_ = std::ios_base::app) : StreamLogOutput(&m_out) {
+		explicit inline FileLogOutput(const std::string &fname_, std::ios_base::openmode mode_ = std::ios_base::trunc, bool mute_ = false) : StreamLogOutput(&m_out, mute_) {
 			m_out.open(fname_, mode_);
 		}
 	};

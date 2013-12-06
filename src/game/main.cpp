@@ -28,9 +28,10 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 
 int main(void) {
 
+	Log::getStandardErr()->setMinLevel(Log::information);
 	log("System") % Log::idgaf << "Starting...";
-	Log::getStandardOut()->setMinLevel(Log::error);
-	log() << "gaaaaaaaaaarrrrrrrrrrrhhhhhhhhh";
+	log("Bar") % Log::warning << "There'll be a welcome in the hilside";
+	log("Foo") % Log::error << "gaaaaaaaaaarrrrrrrrrrrhhhhhhhhh";
 	log("SceneManager") % Log::critical << "GPU is dead";
 	log() % Log::nope << "NONONONONONONONOOoooooooooooooo";
 
