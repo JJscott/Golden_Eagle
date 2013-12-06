@@ -68,6 +68,7 @@ namespace ambition {
 			void setTextColor(std::ostream &o, WORD w) {
 				checkConsoleDefaultsSaved();
 				// set color, preserving current background
+				// apparently i dont need to explicitly flush before setting the color
 				if (&o == &std::cout) {
 					w = w & 0x0F;
 					CONSOLE_SCREEN_BUFFER_INFO csbi;

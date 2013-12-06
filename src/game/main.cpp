@@ -30,7 +30,7 @@ int main(void) {
 
 	Log::getStandardErr()->setMinLevel(Log::information);
 	log("System") % Log::idgaf << "Starting...";
-	log("Bar") % Log::warning << "There'll be a welcome in the hilside";
+	log("Bar") % Log::warning << "There'll be a welcome in the hillside";
 	log("Foo") % Log::error << "gaaaaaaaaaarrrrrrrrrrrhhhhhhhhh";
 	log("SceneManager") % Log::critical << "GPU is dead";
 	log() % Log::nope << "NONONONONONONONOOoooooooooooooo";
