@@ -145,4 +145,6 @@ namespace ambition {
 	LogOutput * const Log::s_cout = new ColoredStreamLogOutput(&std::cout, true);
 	LogOutput * const Log::s_cerr = new ColoredStreamLogOutput(&std::cerr, false);
 
+	std::mutex Log::s_lock_write;
+
 }

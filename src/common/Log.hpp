@@ -9,6 +9,7 @@
 #include <unordered_set>
 #include <chrono>
 #include <ctime>
+#include <mutex>
 
 namespace ambition {
 
@@ -93,6 +94,8 @@ namespace ambition {
 		static LogOutput * const s_cout;
 		static LogOutput * const s_cerr;
 
+		static std::mutex s_lock_write;
+
 	public:
 		static const unsigned information = 0;
 		static const unsigned warning = 1;
@@ -103,10 +106,11 @@ namespace ambition {
 		static const unsigned max = idgaf;
 
 		static inline void write(unsigned level, const std::string &source, const std::string &msg) {
-			level = level > max ? max : level;
-			// TODO better format maybe?
+			// better format maybe?
 			// Wed May 30 12:25:03 2012 [System] Error : IT BROEK
+			std::lock_guard<std::mutex> guard(s_lock_write);
 
+			level = level > max ? max : level;
 			std::time_t tt = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 			std::ostringstream ss;
 
