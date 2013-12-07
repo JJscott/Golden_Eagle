@@ -46,6 +46,14 @@ int main() {
 	Server server(false);
 	server.start();
 
+
+	try {
+	ListenSocket socket;
+	socket.init();
+	} catch(const char* m) {
+		printf("%s\n", m);
+	}
+
 	std::cout << "Hit enter to exit" << std::endl;
 	std::cin.get();
 }
