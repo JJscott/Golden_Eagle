@@ -28,11 +28,14 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 
 int main(void) {
 
-	log("System") % Log::idgaf << "Starting...";
-	Log::getStandardOut()->setMinLevel(Log::error);
-	log() << "gaaaaaaaaaarrrrrrrrrrrhhhhhhhhh";
+	auto logw = []() { return log("System"); };
+
+	Log::getStandardErr()->setMinLevel(Log::information);
+	logw() % Log::idgaf << "Starting...";
+	log("Bar") % Log::warning << "There'll be a welcome in the hillside";
+	log("Foo") % Log::error << "gaaaaaaaaaarrrrrrrrrrrhhhhhhhhh";
 	log("SceneManager") % Log::critical << "GPU is dead";
-	log() % Log::nope << "NONONONONONONONOOoooooooooooooo";
+	logw() % Log::nope << "NONONONONONONONOOoooooooooooooo";
 
 	TriangleEntity myEntity;
 
