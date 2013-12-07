@@ -1,3 +1,5 @@
+#ifndef LOADOBJ_HPP
+#define LOADOBJ_HPP
 
 #include <cstdio>
 #include <cstdlib>
@@ -7,7 +9,11 @@
 #include <cstring>
 #include <algorithm>
 
-#include "loadOBJ.h"
-#include "intial3d.h"
+#include "Initial3D.hpp"
 
-bool loadOBJ(const char * path, std::vector<vec3d> &out_vertices, std::vector<vec3> &out_uvs, std::vector<vec3d> &out_normals, unsigned int &out_n_triangles);
+using namespace std;
+using namespace initial3d;
+
+bool loadOBJ(const char * path, vector<vec3<double> > &out_vertices, vector<vec3<double> > &out_uvs, vector<vec3<double> > &out_normals, unsigned int &out_n_triangles);
+
+#endif

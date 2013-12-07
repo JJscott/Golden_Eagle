@@ -1,24 +1,10 @@
-
-#include <cstdio>
-#include <cstdlib>
-#include <iostream>
-#include <fstream>
-#include <vector>
-#include <cstring>
-#include <algorithm>
-
 #include "loadOBJ.h"
-#include "intial3d.h"
 
-using namspace std;
-using namespace intial3d;
-
-
-bool loadOBJ(const char * path, vector<vec3d> &out_vertices, vector<vec3> &out_uvs, vector<vec3d> &out_normals, unsigned int &out_n_triangles) {
+bool loadOBJ(const char * path, vector<vec3<double> > &out_vertices, vector<vec3<double> > &out_uvs, vector<vec3<double> > &out_normals, unsigned int &out_n_triangles) {
 	vector<unsigned int> vertexIndices, uvIndices, normalIndicies;
-	vector<vec3d> temp_vertices;
-	vector<vec3> temp_uvs;
-	vector<vec3d> temp_normals;
+	vector<vec3<double> > temp_vertices;
+	vector<vec3<double> > temp_uvs;
+	vector<vec3<double> > temp_normals;
 
 
 	FILE* file = fopen(path, "r");
@@ -32,21 +18,26 @@ bool loadOBJ(const char * path, vector<vec3d> &out_vertices, vector<vec3> &out_u
 		int res = fscanf(file, "%s", lineHeader);
 		if(res == EOF)
 			break;
+		double x, y, z;
 
 		if(strcmp(lineHeader, "v") == 0) {
-			vec3d vertex;
-			fscanf(file, "%f %f %f\n", &vertex.x(), &vertex.y(), &vertex.z());
+			
+
+			fscanf(file, "%lf %lf %lf\n", &x, &y, &z);
+			vec3<double> vertex(x, y, z);
 			temp_vertices.push_back(vertex);
 		} else if(strcmp(lineHeader, "vt") == 0) {
-			vec3 uv;
-			fscanf(file, "%f %f\n", &uv.x(), &uv.y());
+			
+			fscanf(file, "%lf %lf\n", &x, &y);
+			vec3<double> uv(x, y, 0);
 			temp_uvs.push_back(uv);
 		} else if(strcmp(lineHeader, "vn") == 0) {
-			vec3d normal;
-			fscanf(file, "%f %f %f\n", &normal.x(), &normal.y(), &normal.z());
+			
+			fscanf(file, "%lf %lf %lf\n", &x, &y, &z);
+			vec3<double> normal(x, y, z);
 			temp_normals.push_back(normal);
 		} else if(strcmp(lineHeader, "f") == 0) {
-			unsigned int vertexIndex[3], uvIndex[3], normalIndex[3];
+			int vertexIndex[3], uvIndex[3], normalIndex[3];
 			uvIndex[0] = 0;
 			uvIndex[1] = 0;
 			uvIndex[2] = 0;
@@ -84,7 +75,7 @@ bool loadOBJ(const char * path, vector<vec3d> &out_vertices, vector<vec3> &out_u
 
 	for(unsigned int i = 0; i < uvIndices.size(); i++) {
 		int uvIndex = uvIndices[i];
-		vec3 uv = temp_uvs[uvIndex-1];
+		vec3<double> uv = temp_uvs[uvIndex-1];
 		out_uvs.push_back(uv);
 	}
 	out_uvs.push_back(vec3d(0, 0, 0));
