@@ -12,4 +12,4 @@ set_target_properties( game
 
 include_directories("${CMAKE_BINARY_DIR}/lib")
 
-target_link_libraries(game glfw common ${GLFW_LIBRARIES})
+target_link_libraries(game glfw common server ${GLFW_LIBRARIES})
