@@ -45,5 +45,5 @@ cmake .. -G "Visual Studio 12 Win64"
 - You now have a VS2013 solution
 - In VS set 'game' as the startup project (right click on 'game' -> Set as StartUp Project)
 - You can start a project by right click -> Debug -> Start new instance
-- Set the working directory for 'game' and 'gamesrv' to $(ProjectDir).. for all configurations (project properties -> configuration -> debugging)
+- Set the working directory for 'game' and 'gamesrv' to $(SolutionDir).. for all configurations (project properties -> configuration -> debugging)
 - You may need to manually rerun cmake if the source file listing changes
