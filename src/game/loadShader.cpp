@@ -6,7 +6,7 @@
 #include <algorithm>
 #include <string>
 
-#include "GLee.h"
+#include "GL/glew.h"
 #include <GLFW/glfw3.h>
 
 #include "loadShader.hpp"

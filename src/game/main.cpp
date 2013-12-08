@@ -3,8 +3,7 @@
 #include <iostream>
 #include <vector>
 
-#include "GLee.h"
-#include <GL/glu.h>
+#include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include "Initial3D.hpp"
 #include "SceneRoot.hpp"
@@ -34,51 +33,48 @@ static void key_callback(GLFWwindow* window, int key, int, int action, int) {
 }
 
 int main(void) {
+	Log::getStandardErr()->setMinLevel(Log::information);
+	
 	ShaderManager *shaderman = new ShaderManager("./res/shaders");
 
-	auto logw = []() { return log("System"); };
-
-	Log::getStandardErr()->setMinLevel(Log::information);
-	logw() % Log::idgaf << "Starting...";
-	log("Bar") % Log::warning << "There'll be a welcome in the hillside";
-	log("Foo") % Log::error << "gaaaaaaaaaarrrrrrrrrrrhhhhhhhhh";
-	log("SceneManager") % Log::critical << "GPU is dead";
-	logw() % Log::nope << "NONONONONONONONOOoooooooooooooo";
-
+	log("System") % Log::idgaf << "Starting...";
+	
 	TriangleEntity myEntity;
 
     rootScene.addChildNode(&myEntity);
 
     GLFWwindow* window;
     glfwSetErrorCallback(error_callback);
-    if (!glfwInit())
-        exit(EXIT_FAILURE);
+	if (!glfwInit()) {
+		log("GLFW") % Log::nope << "Initialisation failed.";
+		cin.get();
+		exit(EXIT_FAILURE);
+	}
 
-    //glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_SAMPLES, 4);
 
     window = glfwCreateWindow(640, 480, "Simple example", NULL, NULL);
-    if (!window)
-    {
+    if (!window) {
+		log("GLFW") % Log::nope << "Window creation failed.";
         glfwTerminate();
 		cin.get();
         exit(EXIT_FAILURE);
     }
     glfwMakeContextCurrent(window);
 
-	if (!GLeeInit()) {
-		cerr << "GLee init failed: " << GLeeGetErrorString() << endl;
+	GLenum glew_err = glewInit();
+	if (glew_err != GLEW_OK) {
+		log("GLEW") % Log::nope << "Initialisation failed: " << glewGetErrorString(glew_err) << endl;
 		cin.get();
 		exit(9001);
 	}
 
-	if (!GLEE_VERSION_3_3) {
-		cout << "DO SOMETHING!" << endl;
-	}
+	log("System") << "GL version string: " << glGetString(GL_VERSION);
 
-    // aa
+	// aa
     GLuint VertexArrayID;
     glGenVertexArrays(1, &VertexArrayID);
     glBindVertexArray(VertexArrayID);
@@ -87,6 +83,7 @@ int main(void) {
     std::vector<vec3d> uvs;
     std::vector<vec3d> normals;
     unsigned int nTriangles = 0;
+
     loadOBJ("res/models/cube.obj", vertices, uvs, normals, nTriangles);
     for(unsigned int i = 0; i < vertices.size(); i++) {
         std::cout << "Vert:" << vertices[i] << endl;

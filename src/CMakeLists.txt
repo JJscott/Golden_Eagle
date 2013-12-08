@@ -6,8 +6,11 @@ configure_file (
 include(FindOpenGL REQUIRED)
 include_directories(${OPENGL_INCLUDE_DIR})
 
-add_subdirectory(${CMAKE_SOURCE_DIR}/ext/glfw-3.0.3 "${CMAKE_BINARY_DIR}/bin/cmake")
+add_subdirectory(${CMAKE_SOURCE_DIR}/ext/glfw-3.0.3 "${CMAKE_BINARY_DIR}/ext/glfw")
 include_directories(${CMAKE_SOURCE_DIR}/ext/glfw-3.0.3/include)
+
+add_subdirectory(${CMAKE_SOURCE_DIR}/ext/glew-1.10.0 "${CMAKE_BINARY_DIR}/ext/glew")
+include_directories(${CMAKE_SOURCE_DIR}/ext/glew-1.10.0/include)
 
 if(MSVC)
   # Force to always compile with W4

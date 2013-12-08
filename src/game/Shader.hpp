@@ -11,7 +11,7 @@
 #ifndef INITIAL3D_SHADER_H
 #define INITIAL3D_SHADER_H
 
-#include "GLee.h"
+#include <GL/glew.h>
 #include <cstdlib>
 #include <cstdio>
 #include <iostream>
@@ -365,7 +365,7 @@ namespace initial3d {
 					// unable to determine type from extension, try everything
 					glAttachShader(id, getShader(GL_VERTEX_SHADER, *it));
 					glAttachShader(id, getShader(GL_FRAGMENT_SHADER, *it));
-					if (GLEE_ARB_geometry_shader4) {
+					if (false) {
 						// only try geometry shader if supported
 						glAttachShader(id, getShader(GL_GEOMETRY_SHADER, *it));
 					}
