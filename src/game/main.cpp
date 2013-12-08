@@ -77,7 +77,7 @@ int main(void) {
     std::vector<vec3d> uvs;
     std::vector<vec3d> normals;
     unsigned int nTriangles = 0;
-    bool res = loadOBJ("res/models/cube.obj", vertices, uvs, normals, nTriangles);
+    loadOBJ("res/models/cube.obj", vertices, uvs, normals, nTriangles);
     for(unsigned int i = 0; i < vertices.size(); i++) {
         std::cout << "Vert:" << vertices[i] << endl;
     }
@@ -88,12 +88,30 @@ int main(void) {
     //}
     //printf("# uvs: %ld\n", uvs.size());
 
-    GLuint Tex = loadBMP("res/textures/tex.bmp");
+    // GLuint Tex = loadBMP("res/textures/tex.bmp");
 
     GLuint vertexBuffer;
     glGenBuffers(1, &vertexBuffer);
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(vec3d), &vertices[0], GL_STATIC_DRAW);
+
+    double newverts[vertices.size()*3];
+    for(int i = 0; i < vertices.size()*3; ) {
+
+        newverts[i+0] = vertices[i/3].x();
+        newverts[i+1] = vertices[i/3].y();
+        newverts[i+2] = vertices[i/3].z();
+
+        if(nearzero(newverts[i])) newverts[i] = 0;
+        if(nearzero(newverts[i+1])) newverts[i+1] = 0;
+        if(nearzero(newverts[i+2])) newverts[i+2] = 0;
+
+        i+=3;
+    }
+
+    for(int i = 0; i < vertices.size(); i++)
+        cout << i << ":" << newverts[i] << endl;
+
+    glBufferData(GL_ARRAY_BUFFER, 36 * 3 * sizeof(double), &newverts[0], GL_STATIC_DRAW);
 
     GLuint colorBuffer;
     glGenBuffers(1, &colorBuffer);
@@ -106,18 +124,18 @@ int main(void) {
     vec3d look = vec3d(0, 0, 0);
     vec3d up = vec3d(0, 1, 0);
 
-    mat4d Projection =  createPerspectiveFOV(initial3d::math::pi() * 0.25, 4.0f / 3.0f, 0.1f, 10000.0f);
+    mat4d Projection =  createPerspectiveFOV(45, 4.0f / 3.0f, 0.1f, 10000.0f);
     mat4d View = createLookAt(pos, look, up);
     mat4d Model = mat4d(3.0f);
 
     cout << "Pos: " << pos << endl << "Look: " << look << endl << "Up: " << up << endl;
-    cout << "Projection: " << Projection << endl;
-    cout << "View: " << View << endl;
-    cout << "Model: " << Projection << endl;
+    cout << "Projection: " << endl << Projection << endl;
+    cout << "View: " << endl << View << endl;
+    cout << "Model: " << endl << Projection << endl;
 
     double longitude = 0;
-    double elevation = 10;
-    double zoom = 10;
+    double elevation = 20;
+    double zoom = 20;
 
     double lastFPSTime = glfwGetTime();
     int fps = 0;
@@ -129,7 +147,7 @@ int main(void) {
 
         double now = glfwGetTime();
         if (now - lastFPSTime > 1) {
-            printf("FPS: %d\n", fps);
+            // printf("FPS: %d\n", fps);
             fps = 0;
             lastFPSTime = glfwGetTime();
         }
@@ -163,17 +181,19 @@ int main(void) {
         if (elevation < 0)
             elevation = 0;
 
-        pos = vec3d(cos(longitude) * zoom, sin(longitude) * zoom, elevation);
-
+        pos = vec3d(cos(longitude) * zoom, elevation, sin(longitude) * zoom);
+        // cout << "Pos: " << pos << endl;
         View = createLookAt(pos, look, up);
+        // cout << "View: " << endl << View << endl;
         mat4d MVP = Projection * View * Model;
-
+        // cout << "MVP: " << endl << MVP << endl;
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         GLuint MatrixID = glGetUniformLocation(programID, "MVP");
         float mvpFloat = (float)MVP(0, 0);
-        glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &mvpFloat);
+        // cout << "mvpFloat: " << mvpFloat << endl;
+        glUniformMatrix4fv(MatrixID, 1, GL_FALSE, (float*)(&MVP(0, 0)));
         glUseProgram(programID);
 
         glEnable(GL_DEPTH_TEST);
@@ -201,8 +221,8 @@ int main(void) {
             (void*)0
         );
 
-        glDrawArrays(GL_TRIANGLES, 0, nTriangles*3);
-        glDisableVertexAttribArray(0);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+        // glDisableVertexAttribArray(0);
 
         glfwSwapBuffers(window);
     } while(!glfwWindowShouldClose(window));
