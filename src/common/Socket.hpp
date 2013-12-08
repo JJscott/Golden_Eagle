@@ -11,7 +11,6 @@
 #include <netinet/in.h>
 typedef int SOCKET;
 #else
-#include <windows.h>
 #include <winsock.h>
 typedef int socklen_t;
 
@@ -80,7 +79,7 @@ public:
 		serveraddr.sin_port = htons(2020);
 		
 		unsigned int result = 0;
-		if((result = bind(listener, (sockaddr*)&serveraddr, sizeof(serveraddr))) == INVALID_SOCKET)
+		if((result = ::bind(listener, (sockaddr*)&serveraddr, sizeof(serveraddr))) == INVALID_SOCKET)
 			throw "unable to bind()";
 
 		if(listen(listener, 10) == -1)

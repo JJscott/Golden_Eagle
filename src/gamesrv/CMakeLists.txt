@@ -13,5 +13,8 @@ set_target_properties(gamesrv
 include_directories("${CMAKE_BINARY_DIR}/lib")
 
 # add_custom_command(TARGET gamesrv PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/res $<TARGET_FILE_DIR:gamesrv>/res)
-
-target_link_libraries(gamesrv common server ${GLFW_LIBRARIES})
+if(MSVC)
+	target_link_libraries(gamesrv common server ${GLFW_LIBRARIES} wsock32)
+else(MSVC)
+	target_link_libraries(gamesrv common server ${GLFW_LIBRARIES})
+endif()
