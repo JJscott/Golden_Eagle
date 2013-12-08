@@ -65,6 +65,7 @@ int main(void) {
     }
     glfwMakeContextCurrent(window);
 
+    glewExperimental = true;
 	GLenum glew_err = glewInit();
 	if (glew_err != GLEW_OK) {
 		log("GLEW") % Log::nope << "Initialisation failed: " << glewGetErrorString(glew_err) << endl;
