@@ -5,18 +5,16 @@
 #include <map>
 #include <vector>
 
-using namespace std;
-
 namespace ambition {
 	class Config {
-		map<string, string> content;
-		vector<string> sections;
+		map<std::string, std::string> content;
+		vector<std::string> sections;
 
 	public:
-		Config(const string& file);
-		vector<string> getSections();
-		const string& get(const string& section, const string& entry) const;
-		const string& get(const string&, const string&, const string&);
+		Config(const std::string& file);
+		vector<std::string> getSections();
+		const std::string& get(const std::string& section, const std::string& entry) const;
+		const std::string& get(const std::string&, const std::string&, const std::string&);
 	};
 }
 

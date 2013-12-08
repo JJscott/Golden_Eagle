@@ -1,6 +1,7 @@
 #include "Config.hpp"
 
 #include <fstream>
+using namespace std;
 
 string trim(const string&, const char* = "\t\r\n");
 
