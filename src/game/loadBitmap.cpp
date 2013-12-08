@@ -4,7 +4,7 @@
 #include <fstream>
 #include <vector>
 #include <algorithm>
-
+#include "GLee.h"
 #include <GLFW/glfw3.h>
 #include "loadBitmap.hpp"
 

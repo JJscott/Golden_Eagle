@@ -18,6 +18,8 @@
 #include "common/Ambition.hpp"
 #include "loadShader.hpp"
 
+#include "Shader.hpp"
+
 using namespace std;
 
 using namespace ambition;
@@ -32,6 +34,7 @@ static void key_callback(GLFWwindow* window, int key, int, int action, int) {
 }
 
 int main(void) {
+	ShaderManager *shaderman = new ShaderManager("./res/shaders");
 
 	auto logw = []() { return log("System"); };
 
@@ -51,20 +54,27 @@ int main(void) {
     if (!glfwInit())
         exit(EXIT_FAILURE);
 
+    //glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
     glfwWindowHint(GLFW_SAMPLES, 4);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     window = glfwCreateWindow(640, 480, "Simple example", NULL, NULL);
     if (!window)
     {
         glfwTerminate();
+		cin.get();
         exit(EXIT_FAILURE);
     }
     glfwMakeContextCurrent(window);
 
-	if (!GLEE_VERSION_1_2) {
+	if (!GLeeInit()) {
+		cerr << "GLee init failed: " << GLeeGetErrorString() << endl;
+		cin.get();
+		exit(9001);
+	}
+
+	if (!GLEE_VERSION_3_3) {
 		cout << "DO SOMETHING!" << endl;
 	}
 
@@ -94,31 +104,31 @@ int main(void) {
     glGenBuffers(1, &vertexBuffer);
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
 
-    double newverts[vertices.size()*3];
-    for(int i = 0; i < vertices.size()*3; ) {
+    //double newverts[vertices.size()*3];
+    //for(int i = 0; i < vertices.size()*3; ) {
 
-        newverts[i+0] = vertices[i/3].x();
-        newverts[i+1] = vertices[i/3].y();
-        newverts[i+2] = vertices[i/3].z();
+    //    newverts[i+0] = vertices[i/3].x();
+    //    newverts[i+1] = vertices[i/3].y();
+    //    newverts[i+2] = vertices[i/3].z();
 
-        if(nearzero(newverts[i])) newverts[i] = 0;
-        if(nearzero(newverts[i+1])) newverts[i+1] = 0;
-        if(nearzero(newverts[i+2])) newverts[i+2] = 0;
+    //    if(nearzero(newverts[i])) newverts[i] = 0;
+    //    if(nearzero(newverts[i+1])) newverts[i+1] = 0;
+    //    if(nearzero(newverts[i+2])) newverts[i+2] = 0;
 
-        i+=3;
-    }
+    //    i+=3;
+    //}
 
-    for(int i = 0; i < vertices.size(); i++)
-        cout << i << ":" << newverts[i] << endl;
+    //for(int i = 0; i < vertices.size(); i++)
+    //    cout << i << ":" << newverts[i] << endl;
 
-    glBufferData(GL_ARRAY_BUFFER, 36 * 3 * sizeof(double), &newverts[0], GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(vec3d), &vertices[0], GL_STATIC_DRAW);
 
     GLuint colorBuffer;
     glGenBuffers(1, &colorBuffer);
     glBindBuffer(GL_ARRAY_BUFFER, colorBuffer);
     glBufferData(GL_ARRAY_BUFFER, uvs.size() * sizeof(vec3d), &uvs[0], GL_STATIC_DRAW);
 
-    GLuint programID = fgLoadShader("res/shaders/SimpleVertexShader.vert", "res/shaders/SimpleVertexShader.frag");
+    GLuint programID = shaderman->getProgram("SimpleVertexShader.vert;SimpleVertexShader.frag");
 
     vec3d pos = vec3d(20, 20, 20);
     vec3d look = vec3d(0, 0, 0);
@@ -173,8 +183,8 @@ int main(void) {
         else if (zoom > 30)
             zoom = 30;
 
-        if (longitude > M_PI * 2)
-            longitude -= (M_PI * 2);
+        if (longitude > initial3d::math::pi() * 2)
+            longitude -= (initial3d::math::pi() * 2);
 
         if (elevation > 40)
             elevation = 40;
@@ -188,13 +198,16 @@ int main(void) {
         mat4d MVP = Projection * View * Model;
         // cout << "MVP: " << endl << MVP << endl;
 
+		int width, height;
+		glfwGetWindowSize(window, &width, &height);
+		glViewport(0, 0, width, height);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        glUseProgram(programID);
         GLuint MatrixID = glGetUniformLocation(programID, "MVP");
         float mvpFloat = (float)MVP(0, 0);
         // cout << "mvpFloat: " << mvpFloat << endl;
-        glUniformMatrix4fv(MatrixID, 1, GL_FALSE, (float*)(&MVP(0, 0)));
-        glUseProgram(programID);
+        glUniformMatrix4fv(MatrixID, 1, true, mat4f(MVP));
 
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LESS);
@@ -206,7 +219,7 @@ int main(void) {
             3,
             GL_DOUBLE,
             GL_FALSE,
-            0,
+            32,
             (void*)0
         );
 
@@ -217,13 +230,22 @@ int main(void) {
             3,
             GL_DOUBLE,
             GL_FALSE,
-            0,
+            32,
             (void*)0
         );
 
         glDrawArrays(GL_TRIANGLES, 0, 36);
         // glDisableVertexAttribArray(0);
 
+
+		/*glBegin(GL_POLYGON);
+		glVertex3f(-1, -1, 0.5);
+		glVertex3f(1, -1, 0.5);
+		glVertex3f(1, 1, 0.5);
+		glVertex3f(-1, 1, 0.5);
+		glEnd();*/
+
+		glFinish();
         glfwSwapBuffers(window);
     } while(!glfwWindowShouldClose(window));
 
