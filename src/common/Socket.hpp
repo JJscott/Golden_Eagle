@@ -64,6 +64,10 @@ public:
 		FD_ZERO_F(&master);
 		FD_ZERO_F(&read_fds);
 
+#ifdef _WIN32
+		WSAData data;
+		WSAStartup(MAKEWORD(1, 1), &data);
+#endif
 		if((listener = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET)
 			throw "unable to socket()";
 
