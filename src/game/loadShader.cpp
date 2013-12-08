@@ -39,19 +39,28 @@ GLuint fgLoadShader(const char * vertex_file_path,const char * fragment_file_pat
  
     GLint Result = GL_FALSE;
     int InfoLogLength;
+    const GLint n = 1;
  
     // Compile Vertex Shader
     printf("Compiling shader : %s\n", vertex_file_path);
     char const * VertexSourcePointer = VertexShaderCode.c_str();
-    glShaderSource(VertexShaderID, 1, &VertexSourcePointer , NULL);
+    printf("Here2: VSC: %s\n", VertexShaderCode.c_str());
+    glShaderSource(VertexShaderID, 1, &VertexSourcePointer, &n);
+    printf("Here\n");
     glCompileShader(VertexShaderID);
+    printf("Shader compiled!\n");
  
     // Check Vertex Shader
     glGetShaderiv(VertexShaderID, GL_COMPILE_STATUS, &Result);
+    printf("Line: %d: Compilestatus: %d\n", __LINE__, Result);
     glGetShaderiv(VertexShaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
-    std::vector<char> VertexShaderErrorMessage(InfoLogLength);
-    glGetShaderInfoLog(VertexShaderID, InfoLogLength, NULL, &VertexShaderErrorMessage[0]);
-    fprintf(stdout, "%s\n", &VertexShaderErrorMessage[0]);
+    printf("Line: %d. InfoLogLength: %d\n", __LINE__, InfoLogLength);
+    char VertexShaderErrorMessage[4096];
+    printf("Line: %d\n", __LINE__);
+    glGetShaderInfoLog(VertexShaderID, InfoLogLength, NULL, VertexShaderErrorMessage);
+    printf("Line: %d\n", __LINE__);
+    fprintf(stdout, "%s\n", VertexShaderErrorMessage);
+    printf("Line: %d\n", __LINE__);
  
     // Compile Fragment Shader
     printf("Compiling shader : %s\n", fragment_file_path);
