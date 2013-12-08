@@ -1,10 +1,12 @@
-#include "loadOBJ.h"
+#include "loadOBJ.hpp"
 
-bool loadOBJ(const char * path, vector<vec3<double> > &out_vertices, vector<vec3<double> > &out_uvs, vector<vec3<double> > &out_normals, unsigned int &out_n_triangles) {
+#include <iostream>
+
+bool loadOBJ(const char * path, vector<vec3d > &out_vertices, vector<vec3d > &out_uvs, vector<vec3d > &out_normals, unsigned int &out_n_triangles) {
 	vector<unsigned int> vertexIndices, uvIndices, normalIndicies;
-	vector<vec3<double> > temp_vertices;
-	vector<vec3<double> > temp_uvs;
-	vector<vec3<double> > temp_normals;
+	vector<vec3d> temp_vertices;
+	vector<vec3d> temp_uvs;
+	vector<vec3d> temp_normals;
 
 
 	FILE* file = fopen(path, "r");
@@ -18,22 +20,24 @@ bool loadOBJ(const char * path, vector<vec3<double> > &out_vertices, vector<vec3
 		int res = fscanf(file, "%s", lineHeader);
 		if(res == EOF)
 			break;
-		double x, y, z;
+		float x, y, z;
 
 		if(strcmp(lineHeader, "v") == 0) {
 			
 
-			fscanf(file, "%lf %lf %lf\n", &x, &y, &z);
-			vec3<double> vertex(x, y, z);
-			temp_vertices.push_back(vertex);
+			fscanf(file, "%f %f %f\n", &x, &y, &z);
+			printf("Scanned: %f %f %f\n", x, y, z);
+			vec3d vx(x, y, z);
+			printf("vxScan: %f %f %f\n", vx.x(), vx.y(), vx.z());
+			temp_vertices.push_back(vx);
 		} else if(strcmp(lineHeader, "vt") == 0) {
 			
-			fscanf(file, "%lf %lf\n", &x, &y);
+			fscanf(file, "%f %f\n", &x, &y);
 			vec3<double> uv(x, y, 0);
 			temp_uvs.push_back(uv);
 		} else if(strcmp(lineHeader, "vn") == 0) {
 			
-			fscanf(file, "%lf %lf %lf\n", &x, &y, &z);
+			fscanf(file, "%f %f %f\n", &x, &y, &z);
 			vec3<double> normal(x, y, z);
 			temp_normals.push_back(normal);
 		} else if(strcmp(lineHeader, "f") == 0) {
@@ -69,7 +73,9 @@ bool loadOBJ(const char * path, vector<vec3<double> > &out_vertices, vector<vec3
 
 	for(unsigned int i = 0; i < vertexIndices.size(); i++) {
 		int vertexIndex = vertexIndices[i];
+		printf("Vertex Index=%d\n", vertexIndex);
 		vec3d vertex = temp_vertices[vertexIndex-1];
+		std::cout << "Adding: " << vertexIndex << " " << vertex << endl;
 		out_vertices.push_back(vertex);
 	}
 
