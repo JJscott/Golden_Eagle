@@ -1,21 +1,54 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+
+#ifndef WIN32
+#include <arpa/inet.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <errno.h>
 #include <netinet/in.h>
-#include <arpa/inet.h>
+typedef int SOCKET;
+#else
+#include <windows.h>
+#include <winsock.h>
+typedef int socklen_t;
+
+#ifdef WIN32
+#define FD_CLR_F(fd, set) u_int __i; \
+for (__i = 0; __i < ((fd_set FAR *)(set))->fd_count; __i++) { \
+if (((fd_set FAR *)(set))->fd_array[__i] == fd) { \
+	while (__i < ((fd_set FAR *)(set))->fd_count - 1) {	\
+		((fd_set FAR *)(set))->fd_array[__i] = \
+		((fd_set FAR *)(set))->fd_array[__i + 1]; \
+		__i++; \
+	} \
+	((fd_set FAR *)(set))->fd_count--; \
+	break; \
+} \
+}
+
+#define FD_SET_F(fd, set) if (((fd_set FAR *)(set))->fd_count < FD_SETSIZE) \
+	((fd_set FAR *)(set))->fd_array[((fd_set FAR *)(set))->fd_count++] = (fd);
+#else
+#define FD_CLR_F FD_CLR
+#define FD_SET_F FD_SET
+#endif
+
+#define FD_ZERO_F FD_ZERO
+#define FD_ISSET_F FD_ISSET
+
+#endif
 
 class ListenSocket {
 	sockaddr_in serveraddr;
 	sockaddr_in clientaddr;
 	fd_set master;
 	fd_set read_fds;
-	int fdmax;
-	int listener;
-	int newfd;
+	unsigned int fdmax;
+	SOCKET listener;
+	unsigned int newfd;
 
 	char buf[2048];
 	int nBytes;
@@ -29,15 +62,15 @@ public:
 	~ListenSocket() {}
 
 	void init() {
-		FD_ZERO(&master);
-		FD_ZERO(&read_fds);
+		FD_ZERO_F(&master);
+		FD_ZERO_F(&read_fds);
 
-		if((listener = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+		if((listener = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET)
 			throw "unable to socket()";
 
 		printf("listener: %d errno: %d\n", listener, errno);
 
-		if(setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1) {
+		if(setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, (char*)&yes, sizeof(int)) == -1) {
 			printf("Error#: %d\n", errno);
 			throw "unable to setup socket";
 		}
@@ -45,25 +78,25 @@ public:
 		serveraddr.sin_family = AF_INET;
 		serveraddr.sin_addr.s_addr = INADDR_ANY;
 		serveraddr.sin_port = htons(2020);
-		memset(&(serveraddr.sin_zero), '\0', 8);
-
-		if(bind(listener, (sockaddr*)&serveraddr, sizeof(serveraddr)) == -1)
+		
+		unsigned int result = 0;
+		if((result = bind(listener, (sockaddr*)&serveraddr, sizeof(serveraddr))) == INVALID_SOCKET)
 			throw "unable to bind()";
 
 		if(listen(listener, 10) == -1)
 			throw "unable to listen()";
 
-		FD_SET(listener, &master);
+		FD_SET_F(listener, &master);
 		fdmax = listener;
 
-		while(1) {
+		for (;;) {
 			read_fds = master;
 			printf("select()'ing\n");
 			if(select(fdmax+1, &read_fds, NULL, NULL, NULL) == -1) {
 				throw "select() error";
 			}
 
-			for(int i = 0; i <= fdmax; i++) {
+			for(unsigned int i = 0; i <= fdmax; i++) {
 				if(FD_ISSET(i, &read_fds))
 				{
 					if(i == listener) {
@@ -71,7 +104,7 @@ public:
 						if((newfd = accept(listener, (sockaddr*)&clientaddr, &addrlen)) == -1)
 							throw "accept() error";
 						printf("new socket: %d\tmaster: %d\n", newfd, master);
-						FD_SET(newfd, &master);
+						FD_SET_F(newfd, &master);
 						if(newfd > fdmax)
 							fdmax = newfd;
 
@@ -83,14 +116,18 @@ public:
 								printf("socket %d hung up\n", i);
 							else
 								throw "recv error";
+#ifndef WIN32
 							close(i);
-							FD_CLR(i, &master);
+#else
+							closesocket(i);
+#endif
+							FD_CLR_F(i, &master);
 						}
 						else {
-							for(int j = 0; j <= fdmax; j++) {
-								if(FD_ISSET(j, &master)) {
+							for(unsigned int j = 0; j <= fdmax; j++) {
+								if(FD_ISSET_F(j, &master)) {
 									if(j != listener && j != i) {
-										if(send(j, buf, nBytes, 0) == -1)
+										if(send(j, buf, nBytes, 0) == INVALID_SOCKET)
 											throw "send() failed";
 									}
 								}

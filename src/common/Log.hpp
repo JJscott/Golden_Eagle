@@ -156,7 +156,7 @@ namespace ambition {
 		std::ostream *m_out;
 
 	protected:
-		virtual void write_impl(unsigned level, const std::string &str) override {
+		virtual void write_impl(unsigned, const std::string &str) override {
 			(*m_out) << str;
 		}
 
