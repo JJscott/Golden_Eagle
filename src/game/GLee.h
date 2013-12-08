@@ -58,8 +58,10 @@
 
 	//
 	// Begin modifications to build without windows.h
+	// 
+	// But only if windows.h isnt already included
 	//
-
+#ifndef _INC_WINDOWS
 	// For gl.h
 	#define APIENTRY __stdcall
 	#define WINGDIAPI __declspec(dllimport)
@@ -81,7 +83,7 @@
 	#define DECLARE_HANDLE(name) struct name##__ { int unused; }; typedef struct name##__ *name
 	DECLARE_HANDLE(HDC);
 	DECLARE_HANDLE(HGLRC);
-
+#endif
 	//
 	// End modifications
 	//

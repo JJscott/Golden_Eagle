@@ -40,6 +40,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+// modifications to build without including windows.h in GLee.h
+#include <windows.h>
+// end modifications
+
 #include "GLee.h"
 
 #if defined(__APPLE__) || defined(__APPLE_CC__)
