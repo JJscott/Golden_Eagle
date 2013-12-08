@@ -42,7 +42,9 @@
 #include <string.h>
 
 // modifications to build without including windows.h in GLee.h
+#ifdef _WIN32
 #include <windows.h>
+#endif
 // end modifications
 
 #include "GLee.h"
