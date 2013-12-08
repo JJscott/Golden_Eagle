@@ -2,7 +2,7 @@
 #include <cstdlib>
 #include <cstring>
 
-#ifndef WIN32
+#ifndef _WIN32
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -15,7 +15,7 @@ typedef int SOCKET;
 #include <winsock.h>
 typedef int socklen_t;
 
-#ifdef WIN32
+#ifdef _WIN32
 #define FD_CLR_F(fd, set) u_int __i; \
 for (__i = 0; __i < ((fd_set FAR *)(set))->fd_count; __i++) { \
 if (((fd_set FAR *)(set))->fd_array[__i] == fd) { \
@@ -116,7 +116,7 @@ public:
 								printf("socket %d hung up\n", i);
 							else
 								throw "recv error";
-#ifndef WIN32
+#ifndef _WIN32
 							close(i);
 #else
 							closesocket(i);

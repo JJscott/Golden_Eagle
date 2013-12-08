@@ -13,10 +13,6 @@
 #include "common/Config.hpp"
 #include "SceneNode.hpp"
 
-#ifdef WIN32
-#pragma comment(lib, "OPENGL32")
-#endif
-
 using namespace std;
 
 using namespace ambition;
