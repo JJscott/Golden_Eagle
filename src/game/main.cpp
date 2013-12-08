@@ -106,13 +106,18 @@ int main(void) {
     vec3d look = vec3d(0, 0, 0);
     vec3d up = vec3d(0, 1, 0);
 
-    mat4d Projection =  createPerspectiveFOV(45.0f, 4.0f / 3.0f, 0.1f, 10000.0f);
+    mat4d Projection =  createPerspectiveFOV(initial3d::math::pi() * 0.25, 4.0f / 3.0f, 0.1f, 10000.0f);
     mat4d View = createLookAt(pos, look, up);
     mat4d Model = mat4d(3.0f);
 
+    cout << "Pos: " << pos << endl << "Look: " << look << endl << "Up: " << up << endl;
+    cout << "Projection: " << Projection << endl;
+    cout << "View: " << View << endl;
+    cout << "Model: " << Projection << endl;
+
     double longitude = 0;
-    double elevation = 20;
-    double zoom = 20;
+    double elevation = 10;
+    double zoom = 10;
 
     double lastFPSTime = glfwGetTime();
     int fps = 0;
@@ -179,7 +184,7 @@ int main(void) {
         glVertexAttribPointer(
             0,
             3,
-            GL_FLOAT,
+            GL_DOUBLE,
             GL_FALSE,
             0,
             (void*)0
@@ -189,8 +194,8 @@ int main(void) {
         glBindBuffer(GL_ARRAY_BUFFER, colorBuffer);
         glVertexAttribPointer(
             1,
-            2,
-            GL_FLOAT,
+            3,
+            GL_DOUBLE,
             GL_FALSE,
             0,
             (void*)0
