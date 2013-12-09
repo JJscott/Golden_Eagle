@@ -24,7 +24,7 @@ using namespace std;
 using namespace ambition;
 
 static void error_callback(int, const char* description) {
-    fputs(description, stderr);
+	log("GLFW") % Log::error << description;
 }
 
 static void key_callback(GLFWwindow* window, int key, int, int action, int) {
@@ -46,10 +46,11 @@ int main(void) {
     GLFWwindow* window;
     glfwSetErrorCallback(error_callback);
 	if (!glfwInit()) {
-		log("GLFW") % Log::nope << "Initialisation failed.";
+		log("GLFW") % Log::nope << "Initialisation failed";
 		cin.get();
 		exit(EXIT_FAILURE);
 	}
+	log("GLFW") << "Initialised";
 
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -58,20 +59,25 @@ int main(void) {
 
     window = glfwCreateWindow(640, 480, "Simple example", NULL, NULL);
     if (!window) {
-		log("GLFW") % Log::nope << "Window creation failed.";
+		log("GLFW") % Log::nope << "Window creation failed";
         glfwTerminate();
 		cin.get();
         exit(EXIT_FAILURE);
     }
+	log("GLFW") << "Window created";
+
     glfwMakeContextCurrent(window);
 
     glewExperimental = true;
 	GLenum glew_err = glewInit();
+	log("GLEW") << "Initialisation returned " << glew_err;
 	if (glew_err != GLEW_OK) {
 		log("GLEW") % Log::nope << "Initialisation failed: " << glewGetErrorString(glew_err) << endl;
+		glfwTerminate();
 		cin.get();
 		exit(9001);
 	}
+	log("GLEW") << "Initialised";
 
 	log("System") << "GL version string: " << glGetString(GL_VERSION);
 

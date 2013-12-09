@@ -7,12 +7,12 @@
 
 namespace ambition {
 	class Config {
-		map<std::string, std::string> content;
-		vector<std::string> sections;
+		std::map<std::string, std::string> content;
+		std::vector<std::string> sections;
 
 	public:
 		Config(const std::string& file);
-		vector<std::string> getSections();
+		std::vector<std::string> getSections();
 		const std::string& get(const std::string& section, const std::string& entry) const;
 		const std::string& get(const std::string&, const std::string&, const std::string&);
 	};
