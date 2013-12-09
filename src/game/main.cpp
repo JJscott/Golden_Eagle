@@ -19,8 +19,9 @@
 #include "loadBitmap.hpp"
 #include "common/Ambition.hpp"
 #include "loadShader.hpp"
-
+#include "WindowManager.hpp"
 #include "common/Event.hpp"
+#include "Window.hpp"
 
 #include "Shader.hpp"
 
@@ -28,38 +29,37 @@ using namespace std;
 
 using namespace ambition;
 
-static void error_callback(int, const char* description) {
-	log("GLFW") % Log::error << description;
-}
-
-static void key_callback(GLFWwindow* window, int key, int, int action, int) {
-    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, GL_TRUE);
-}
+// static void error_callback(int, const char* description) {
+//     log("GLFW") % Log::error << description;
+// }
+// static void key_callback(GLFWwindow* window, int key, int, int action, int) {
+//     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+//         glfwSetWindowShouldClose(window, GL_TRUE);
+// }
 
 int main(void) {
 	Log::getStandardErr()->setMinLevel(Log::information);
 	
-	int foo = 9001;
+	// int foo = 9001;
 
-	// use some kind of reference type if you need to modify the event arg
-	Event<int *> e;
+	// // use some kind of reference type if you need to modify the event arg
+	// Event<int *> e;
 	
-	unsigned k = e.attach([](int *arg) { log("Event") << *arg; });
+	// unsigned k = e.attach([](int *arg) { log("Event") << *arg; });
 
-	thread t([&]() {
-		log("Thread") << "Begin...";
-		this_thread::sleep_for(chrono::milliseconds(3000));
-		e.notify(&foo);
-	});
+	// thread t([&]() {
+	// 	log("Thread") << "Begin...";
+	// 	this_thread::sleep_for(chrono::milliseconds(3000));
+	// 	e.notify(&foo);
+	// });
 
-	// wait in a manner that suppresses unwanted wakeup
-	while (!e.wait()) {
-		cout << "spurious" << endl;
-	}
+	// // wait in a manner that suppresses unwanted wakeup
+	// while (!e.wait()) {
+	// 	cout << "spurious" << endl;
+	// }
 
-	e.detach(k);
-	e.notify(&foo);
+	// e.detach(k);
+	// e.notify(&foo);
 
 	ShaderManager *shaderman = new ShaderManager("./res/shaders");
 
@@ -69,30 +69,11 @@ int main(void) {
 
     rootScene.addChildNode(&myEntity);
 
-    GLFWwindow* window;
-    glfwSetErrorCallback(error_callback);
-	if (!glfwInit()) {
-		log("GLFW") % Log::nope << "Initialisation failed";
-		cin.get();
-		std::exit(EXIT_FAILURE);
-	}
-	log("GLFW") << "Initialised";
+    wm()->init();
+    Window *window = wm()->addWindow(1024, 768, "Golden_Eagle");
+    wm()->apply();
 
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_SAMPLES, 4);
 
-    window = glfwCreateWindow(640, 480, "Simple example", NULL, NULL);
-    if (!window) {
-		log("GLFW") % Log::nope << "Window creation failed";
-        glfwTerminate();
-		cin.get();
-        std::exit(EXIT_FAILURE);
-    }
-	log("GLFW") << "Window created";
-
-    glfwMakeContextCurrent(window);
 
     glewExperimental = true;
 	GLenum glew_err = glewInit();
@@ -118,38 +99,17 @@ int main(void) {
     unsigned int nTriangles = 0;
 
     loadOBJ("res/models/cube.obj", vertices, uvs, normals, nTriangles);
-    for(unsigned int i = 0; i < vertices.size(); i++) {
-        std::cout << "Vert:" << vertices[i] << endl;
-    }
-    printf("# Vertices: %ld\n", vertices.size());
+    // for(unsigned int i = 0; i < vertices.size(); i++) {
+        // std::cout << "Vert:" << vertices[i] << endl;
+    // }
+    // printf("# Vertices: %ld\n", vertices.size());
 
-    //for(unsigned int i = 0; i < uvs.size(); i++) {
-    //  printf("UV: %f %f\n", uvs[i].x, uvs[i].y);
-    //}
-    //printf("# uvs: %ld\n", uvs.size());
-
-    // GLuint Tex = loadBMP("res/textures/tex.bmp");
+    GLuint Tex = loadBMP("res/textures/tex.bmp");
 
     GLuint vertexBuffer;
     glGenBuffers(1, &vertexBuffer);
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
 
-    //double newverts[vertices.size()*3];
-    //for(int i = 0; i < vertices.size()*3; ) {
-
-    //    newverts[i+0] = vertices[i/3].x();
-    //    newverts[i+1] = vertices[i/3].y();
-    //    newverts[i+2] = vertices[i/3].z();
-
-    //    if(nearzero(newverts[i])) newverts[i] = 0;
-    //    if(nearzero(newverts[i+1])) newverts[i+1] = 0;
-    //    if(nearzero(newverts[i+2])) newverts[i+2] = 0;
-
-    //    i+=3;
-    //}
-
-    //for(int i = 0; i < vertices.size(); i++)
-    //    cout << i << ":" << newverts[i] << endl;
 
     glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(vec3d), &vertices[0], GL_STATIC_DRAW);
 
@@ -158,7 +118,9 @@ int main(void) {
     glBindBuffer(GL_ARRAY_BUFFER, colorBuffer);
     glBufferData(GL_ARRAY_BUFFER, uvs.size() * sizeof(vec3d), &uvs[0], GL_STATIC_DRAW);
 
+    log() << "getting shaders";
     GLuint programID = shaderman->getProgram("SimpleVertexShader.vert;SimpleVertexShader.frag");
+    log() << "got shaders";
 
     vec3d pos = vec3d(20, 20, 20);
     vec3d look = vec3d(0, 0, 0);
@@ -187,25 +149,27 @@ int main(void) {
 
         double now = glfwGetTime();
         if (now - lastFPSTime > 1) {
-            printf("FPS: %d\n", fps);
+            char fpsString[100];
+            sprintf(fpsString, "FPS: %d", fps);
+            window->setTitle(fpsString);
             fps = 0;
             lastFPSTime = glfwGetTime();
         }
         fps++;
 
-        if (glfwGetKey(window, GLFW_KEY_A))
+        if (glfwGetKey(window->getHandle(), GLFW_KEY_A))
             longitude -= 0.05f;
-        if (glfwGetKey(window, GLFW_KEY_D))
+        if (glfwGetKey(window->getHandle(), GLFW_KEY_D))
             longitude += 0.05f;
 
-        if (glfwGetKey(window, GLFW_KEY_W))
+        if (glfwGetKey(window->getHandle(), GLFW_KEY_W))
             elevation += 0.1;
-        if (glfwGetKey(window, GLFW_KEY_S))
+        if (glfwGetKey(window->getHandle(), GLFW_KEY_S))
             elevation -= 0.1;
 
-        if (glfwGetKey(window, GLFW_KEY_E))
+        if (glfwGetKey(window->getHandle(), GLFW_KEY_E))
             zoom += 1;
-        if (glfwGetKey(window, GLFW_KEY_Q))
+        if (glfwGetKey(window->getHandle(), GLFW_KEY_Q))
             zoom -= 1;
 
         if (zoom < 1)
@@ -229,14 +193,12 @@ int main(void) {
         // cout << "MVP: " << endl << MVP << endl;
 
 		int width, height;
-		glfwGetWindowSize(window, &width, &height);
+		glfwGetWindowSize(window->getHandle(), &width, &height);
 		glViewport(0, 0, width, height);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         glUseProgram(programID);
         GLuint MatrixID = glGetUniformLocation(programID, "MVP");
-        float mvpFloat = (float)MVP(0, 0);
-        // cout << "mvpFloat: " << mvpFloat << endl;
         glUniformMatrix4fv(MatrixID, 1, true, mat4f(MVP));
 
         glEnable(GL_DEPTH_TEST);
@@ -276,10 +238,10 @@ int main(void) {
 		glEnd();*/
 
 		glFinish();
-        glfwSwapBuffers(window);
-    } while(!glfwWindowShouldClose(window));
+        glfwSwapBuffers(window->getHandle());
+    } while(!glfwWindowShouldClose(window->getHandle()));
 
-    glfwDestroyWindow(window);
+    glfwDestroyWindow(window->getHandle());
     glfwTerminate();
     std::exit(EXIT_SUCCESS);
 }
