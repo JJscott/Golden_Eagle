@@ -53,7 +53,11 @@ int main(void) {
 		e.notify(&foo);
 	});
 
-	e.wait();
+	// wait in a manner that suppresses unwanted wakeup
+	while (!e.wait()) {
+		cout << "spurious" << endl;
+	}
+
 	e.detach(k);
 	e.notify(&foo);
 
@@ -70,7 +74,7 @@ int main(void) {
 	if (!glfwInit()) {
 		log("GLFW") % Log::nope << "Initialisation failed";
 		cin.get();
-		exit(EXIT_FAILURE);
+		std::exit(EXIT_FAILURE);
 	}
 	log("GLFW") << "Initialised";
 
@@ -84,7 +88,7 @@ int main(void) {
 		log("GLFW") % Log::nope << "Window creation failed";
         glfwTerminate();
 		cin.get();
-        exit(EXIT_FAILURE);
+        std::exit(EXIT_FAILURE);
     }
 	log("GLFW") << "Window created";
 
@@ -97,7 +101,7 @@ int main(void) {
 		log("GLEW") % Log::nope << "Initialisation failed: " << glewGetErrorString(glew_err) << endl;
 		glfwTerminate();
 		cin.get();
-		exit(9001);
+		std::exit(9001);
 	}
 	log("GLEW") << "Initialised";
 
@@ -277,6 +281,6 @@ int main(void) {
 
     glfwDestroyWindow(window);
     glfwTerminate();
-    exit(EXIT_SUCCESS);
+    std::exit(EXIT_SUCCESS);
 }
 
