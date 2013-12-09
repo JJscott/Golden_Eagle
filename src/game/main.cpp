@@ -161,7 +161,7 @@ int main(void) {
 
         double now = glfwGetTime();
         if (now - lastFPSTime > 1) {
-            // printf("FPS: %d\n", fps);
+            printf("FPS: %d\n", fps);
             fps = 0;
             lastFPSTime = glfwGetTime();
         }
