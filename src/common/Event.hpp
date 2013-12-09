@@ -1,32 +1,54 @@
 #ifndef EVENT_HPP
 #define EVENT_HPP
 
-#include <vector>
+#include <map>
+#include <functional>
+#include <mutex>
+#include <condition_variable>
 
 namespace ambition {
-	template <class T>
-	class Delegate {
-	public:
-		Delegate() {}
-		virtual ~Delegate() {}
-		virtual void fire(T*) = 0;
-	};
 
-	template <class T>
+	template <class EventArgT>
 	class Event {
-		std::vector<Delegate<T> *> observers;
+	private:
+		static unsigned s_next_key;
+		std::map<unsigned, std::function<void(EventArgT)> > m_observers;
+		std::mutex m_lock;
+		std::condition_variable m_cond;
+
 	public:
 		Event() {}
-		virtual ~Event() {}
-		void attach(Delegate<T> &d) { observers.push_back(&d); }
-		void notify() {
-			
-			for(auto d : observers) {
-				// FIXME - WHAT THE HELL IS THIS DANGEROUS-LOOKING CAST??? -Ben
-				d->fire(static_cast<T*>(this));
+
+		unsigned attach(std::function<void(EventArgT)> func) {
+			std::lock_guard<std::mutex> guard(m_lock);
+			m_observers[s_next_key++] = func;
+			return 0;
+		}
+
+		bool detach(unsigned key) {
+			// TODO detach from within callback?
+			std::lock_guard<std::mutex> guard(m_lock);
+			return m_observers.erase(key);
+		}
+
+		void notify(EventArgT e) {
+			std::lock_guard<std::mutex> guard(m_lock);
+			for(auto pair : m_observers) {
+				pair.second(e);
 			}
+			m_cond.notify_all();
+		}
+
+		void wait() {
+			// TODO this doesnt suppress spurious wakeup
+			std::unique_lock<std::mutex> guard(m_lock);
+			m_cond.wait(guard);
 		}
 	};
+
+	template <typename EventArgT>
+	unsigned Event<EventArgT>::s_next_key = 0;
+
 }
 
 #endif

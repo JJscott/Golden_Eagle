@@ -3,6 +3,9 @@
 #include <iostream>
 #include <vector>
 
+#include <thread>
+#include <chrono>
+
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include "Initial3D.hpp"
@@ -16,6 +19,8 @@
 #include "loadBitmap.hpp"
 #include "common/Ambition.hpp"
 #include "loadShader.hpp"
+
+#include "common/Event.hpp"
 
 #include "Shader.hpp"
 
@@ -35,6 +40,23 @@ static void key_callback(GLFWwindow* window, int key, int, int action, int) {
 int main(void) {
 	Log::getStandardErr()->setMinLevel(Log::information);
 	
+	int foo = 9001;
+
+	// use some kind of reference type if you need to modify the event arg
+	Event<int *> e;
+	
+	unsigned k = e.attach([](int *arg) { log("Event") << *arg; });
+
+	thread t([&]() {
+		log("Thread") << "Begin...";
+		this_thread::sleep_for(chrono::milliseconds(3000));
+		e.notify(&foo);
+	});
+
+	e.wait();
+	e.detach(k);
+	e.notify(&foo);
+
 	ShaderManager *shaderman = new ShaderManager("./res/shaders");
 
 	log("System") % Log::idgaf << "Starting...";

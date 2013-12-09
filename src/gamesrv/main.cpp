@@ -12,24 +12,24 @@
 using namespace ambition;
 
 
-class EventTest : public Event<EventTest> {
-public:
-	EventTest() {}
-	~EventTest() {}
-
-	void doTest() { notify(); }
-	void testTest() { log("EventTest") % Log::information << "Testing the test"; }
-};
-
-class EventDelegate : public Delegate<EventTest> {
-public:
-	EventDelegate() {}
-	~EventDelegate() {}
-	void fire(EventTest *et) {
-		log("EventTest") % Log::information << "Fired test event";
-		et->testTest();
-	}
-};
+//class EventTest : public Event<EventTest> {
+//public:
+//	EventTest() {}
+//	~EventTest() {}
+//
+//	void doTest() { notify(); }
+//	void testTest() { log("EventTest") % Log::information << "Testing the test"; }
+//};
+//
+//class EventDelegate : public Delegate<EventTest> {
+//public:
+//	EventDelegate() {}
+//	~EventDelegate() {}
+//	void fire(EventTest *et) {
+//		log("EventTest") % Log::information << "Fired test event";
+//		et->testTest();
+//	}
+//};
 
 int main() {
 	// Config conf("server.conf");
@@ -38,10 +38,10 @@ int main() {
 	Log::getStandardOut()->setMinLevel(Log::error);
 	// log("ConfigTest") % Log::idgaf << conf.get("test", "abc");
 
-	EventTest et;
-	EventDelegate ed;
-	et.attach(ed);
-	et.notify();
+	//EventTest et;
+	//EventDelegate ed;
+	//et.attach(ed);
+	//et.notify();
 
 	Server server(false);
 	server.start();
