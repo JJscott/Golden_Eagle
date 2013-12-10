@@ -1,11 +1,32 @@
+/*
+ *
+ * Ambition Engine Master Header
+ *
+ */
+
+#ifndef AMBITION_HPP
+#define AMBITION_HPP
+
+// TODO server etc don't link to game object code, so avoid using game includes outside of game!
+// initial3d will be moved to common eventually, and is header-only so this is ok for now
 #include "game/Initial3D.hpp"
 
+// TODO not be ugly - use vec3 and nan_error
 #define nearzeroconstant 0.0001
 #define nearzero(x) (x <= nearzeroconstant && x >= -nearzeroconstant)
 
 namespace ambition {
-	mat4d createPerspectiveFOV(double fov, double ratio, double near, double far) {
-		mat4d m;
+
+	class Uncopyable {
+	private:
+		Uncopyable(const Uncopyable &rhs) = delete;
+		Uncopyable & operator=(const Uncopyable &rhs) = delete;
+	protected:
+		Uncopyable() { }
+	};
+
+	inline initial3d::mat4d createPerspectiveFOV(double fov, double ratio, double near, double far) {
+		initial3d::mat4d m;
 		double top = near*tan(fov*initial3d::math::pi() / 360.0);
 		double right = top*ratio;
 		double left = -right;
@@ -37,8 +58,8 @@ namespace ambition {
 		return m;
 	}
 
-	mat4d createLookAt(initial3d::vec3<double> eye, initial3d::vec3<double> center, initial3d::vec3<double> up) {
-		mat4d m;
+	inline initial3d::mat4d createLookAt(initial3d::vec3<double> eye, initial3d::vec3<double> center, initial3d::vec3<double> up) {
+		initial3d::mat4d m;
 
 		if(eye == center)
 			return m;
@@ -99,3 +120,5 @@ namespace ambition {
 		return m;
 	}
 }
+
+#endif // AMBITION_HPP

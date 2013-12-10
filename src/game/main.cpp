@@ -25,8 +25,9 @@
 
 #include "Shader.hpp"
 
-using namespace std;
+#include "common/Dragons.hpp"
 
+using namespace std;
 using namespace ambition;
 
 // static void error_callback(int, const char* description) {
@@ -39,7 +40,7 @@ using namespace ambition;
 
 int main(void) {
 	Log::getStandardErr()->setMinLevel(Log::information);
-	
+
 	// int foo = 9001;
 
 	// // use some kind of reference type if you need to modify the event arg
@@ -69,11 +70,19 @@ int main(void) {
 
     rootScene.addChildNode(&myEntity);
 
-    wm()->init();
-    Window *window = wm()->addWindow(1024, 768, "Golden_Eagle");
-    wm()->apply();
+    //wm()->init();
+    //Window *window = wm()->addWindow(1024, 768, "Golden_Eagle");
+    //wm()->apply();
 
+	Window *window = createWindow().setWidth(1024).setHeight(768).setTitle("Golden Eagle").open();
 
+	window->onScroll.attach([](mouse_scroll_event e) {
+		cout << e.offset.h << endl;
+	});
+
+	window->onChar.attach([](char_event e) {
+		cout << e.codepoint << ": " << char(e.codepoint) << endl;
+	});
 
     glewExperimental = true;
 	GLenum glew_err = glewInit();
@@ -157,19 +166,19 @@ int main(void) {
         }
         fps++;
 
-        if (glfwGetKey(window->getHandle(), GLFW_KEY_A))
+        if (window->getKey(GLFW_KEY_A))
             longitude -= 0.05f;
-        if (glfwGetKey(window->getHandle(), GLFW_KEY_D))
+		if (window->getKey(GLFW_KEY_D))
             longitude += 0.05f;
 
-        if (glfwGetKey(window->getHandle(), GLFW_KEY_W))
+		if (window->getKey(GLFW_KEY_W))
             elevation += 0.1;
-        if (glfwGetKey(window->getHandle(), GLFW_KEY_S))
+		if (window->getKey(GLFW_KEY_S))
             elevation -= 0.1;
 
-        if (glfwGetKey(window->getHandle(), GLFW_KEY_E))
+		if (window->getKey(GLFW_KEY_E))
             zoom += 1;
-        if (glfwGetKey(window->getHandle(), GLFW_KEY_Q))
+		if (window->getKey(GLFW_KEY_Q))
             zoom -= 1;
 
         if (zoom < 1)
@@ -192,8 +201,8 @@ int main(void) {
         mat4d MVP = Projection * View * Model;
         // cout << "MVP: " << endl << MVP << endl;
 
-		int width, height;
-		glfwGetWindowSize(window->getHandle(), &width, &height);
+		int width = window->getWidth();
+		int height = window->getHeight();
 		glViewport(0, 0, width, height);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -238,10 +247,10 @@ int main(void) {
 		glEnd();*/
 
 		glFinish();
-        glfwSwapBuffers(window->getHandle());
-    } while(!glfwWindowShouldClose(window->getHandle()));
+		window->swapBuffers();
+    } while(!window->shouldClose());
 
-    glfwDestroyWindow(window->getHandle());
+    delete window;
     glfwTerminate();
     std::exit(EXIT_SUCCESS);
 }

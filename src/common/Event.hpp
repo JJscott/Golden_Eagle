@@ -6,10 +6,12 @@
 #include <mutex>
 #include <condition_variable>
 
+#include "Ambition.hpp"
+
 namespace ambition {
 
 	template <class EventArgT>
-	class Event {
+	class Event : private Uncopyable {
 	private:
 		unsigned m_next_key = 0;
 		unsigned m_count = 0;
