@@ -25,8 +25,6 @@
 
 #include "Shader.hpp"
 
-#include "common/Dragons.hpp"
-
 using namespace std;
 using namespace ambition;
 
