@@ -66,16 +66,16 @@ bool loadOBJ(const char * path, vector<vec3d > &out_vertices, vector<vec3d > &ou
 			normalIndicies.push_back(normalIndex[1]);
 			normalIndicies.push_back(normalIndex[2]);
 
-			printf("%d/%d/%d %d/%d/%d %d/%d/%d\n", vertexIndex[0], uvIndex[0], normalIndex[0], vertexIndex[1], uvIndex[1], normalIndex[1], vertexIndex[2], uvIndex[2], normalIndex[2]);
+			// printf("%d/%d/%d %d/%d/%d %d/%d/%d\n", vertexIndex[0], uvIndex[0], normalIndex[0], vertexIndex[1], uvIndex[1], normalIndex[1], vertexIndex[2], uvIndex[2], normalIndex[2]);
 			out_n_triangles++;
 		}
 	}
 
 	for(unsigned int i = 0; i < vertexIndices.size(); i++) {
 		int vertexIndex = vertexIndices[i];
-		printf("Vertex Index=%d\n", vertexIndex);
+		// printf("Vertex Index=%d\n", vertexIndex);
 		vec3d vertex = temp_vertices[vertexIndex-1];
-		std::cout << "Adding: " << vertexIndex << " " << vertex << endl;
+		// std::cout << "Adding: " << vertexIndex << " " << vertex << endl;
 		out_vertices.push_back(vertex);
 	}
 

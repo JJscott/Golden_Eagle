@@ -105,13 +105,13 @@ int main(void) {
     std::vector<vec3d> normals;
     unsigned int nTriangles = 0;
 
-    loadOBJ("res/models/cube.obj", vertices, uvs, normals, nTriangles);
+    loadOBJ("res/mdl/stump/stump.obj", vertices, uvs, normals, nTriangles);
     // for(unsigned int i = 0; i < vertices.size(); i++) {
         // std::cout << "Vert:" << vertices[i] << endl;
     // }
     // printf("# Vertices: %ld\n", vertices.size());
 
-    GLuint Tex = loadBMP("res/textures/tex.bmp");
+    GLuint Tex = loadBMP("res/mdl/stump/diff.bmp");
 
     GLuint vertexBuffer;
     glGenBuffers(1, &vertexBuffer);
@@ -120,6 +120,7 @@ int main(void) {
 
     glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(vec3d), &vertices[0], GL_STATIC_DRAW);
 
+    log() << "there are " << uvs.size() << " uvs";
     GLuint colorBuffer;
     glGenBuffers(1, &colorBuffer);
     glBindBuffer(GL_ARRAY_BUFFER, colorBuffer);
@@ -233,17 +234,8 @@ int main(void) {
             (void*)0
         );
 
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+        glDrawArrays(GL_TRIANGLES, 0, nTriangles*3);
         // glDisableVertexAttribArray(0);
-
-
-		/*glBegin(GL_POLYGON);
-		glVertex3f(-1, -1, 0.5);
-		glVertex3f(1, -1, 0.5);
-		glVertex3f(1, 1, 0.5);
-		glVertex3f(-1, 1, 0.5);
-		glEnd();*/
-
 		glFinish();
 		window->swapBuffers();
     } while(!window->shouldClose());
