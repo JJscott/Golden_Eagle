@@ -2,7 +2,7 @@
 #define MOVABLEFRAME_HPP
 
 #include "common/Initial3D.hpp"
-#include "Frame.hpp"
+#include "common/sg/Frame.hpp"
 
 class MovableFrame : public Frame {
 private:
