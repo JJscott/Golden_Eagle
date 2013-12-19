@@ -136,9 +136,9 @@ namespace initial3d {
 
 	public:
 		inline static void disassembleProgramName(const std::string &name, std::vector<std::string> &out) {
-			int i = 0;
+			size_t i = 0;
 			while (i != std::string::npos) {
-				int j = name.find(';', i);
+				size_t j = name.find(';', i);
 				out.push_back(name.substr(i, j - i));
 				if (j != std::string::npos) j++;
 				i = j;
@@ -312,7 +312,7 @@ namespace initial3d {
 			// append preprocessed source
 			text_os_head << text_os_main.str();
 			// display source string info
-			for (int i = 0; i < source_names.size(); i++) {
+			for (size_t i = 0; i < source_names.size(); i++) {
 				std::cout << i << "\t: " << source_names[i] << std::endl;
 			}
 			// now, lets compile!

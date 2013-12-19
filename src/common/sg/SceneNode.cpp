@@ -1,5 +1,4 @@
-
-#include "SceneNode.hpp"
+#include "common/sg/SceneNode.hpp"
 
 SceneNode::SceneNode(SceneNode* o_parent, const char* s_name)
 	: name(s_name) {

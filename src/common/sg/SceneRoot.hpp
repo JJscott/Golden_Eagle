@@ -10,6 +10,6 @@ class SceneRoot : public SceneNode {
 		const bool isRootNode() const {
 			return true;
 		}
-} rootScene;
+};
 
 #endif

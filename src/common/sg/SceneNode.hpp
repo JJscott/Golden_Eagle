@@ -28,4 +28,4 @@ public:
 	SceneNode* getChildNodeByName(const char*);
 };
 
-#endif 
+#endif

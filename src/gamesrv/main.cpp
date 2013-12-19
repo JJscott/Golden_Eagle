@@ -9,6 +9,9 @@
 #include "server/Server.hpp"
 #include "common/Event.hpp"
 
+#include "common/sg/Scene.hpp"
+#include "common/entities/TreeEntity.hpp"
+
 using namespace ambition;
 
 
@@ -33,6 +36,8 @@ using namespace ambition;
 
 int main() {
 	// Config conf("server.conf");
+	Scene *scene = new Scene;
+	scene->addEntity(new TreeEntity);
 	
 	log("System") % Log::idgaf << "Starting...";
 	Log::getStandardOut()->setMinLevel(Log::error);

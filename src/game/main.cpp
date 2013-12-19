@@ -111,7 +111,8 @@ int main(void) {
     // }
     // printf("# Vertices: %ld\n", vertices.size());
 
-    GLuint Tex = loadBMP("res/mdl/stump/diff.bmp");
+    //GLuint Tex = 
+    loadBMP("res/mdl/stump/diff.bmp");
 
     GLuint vertexBuffer;
     glGenBuffers(1, &vertexBuffer);
@@ -244,4 +245,3 @@ int main(void) {
     glfwTerminate();
     std::exit(EXIT_SUCCESS);
 }
-

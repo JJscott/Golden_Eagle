@@ -186,7 +186,7 @@ namespace ambition {
 		inline create_window_args & setSize(int w, int h) { m_width = w; m_height = h; return *this; }
 		inline create_window_args & setTitle(const std::string &title) { m_title = title; return *this; }
 		inline create_window_args & setMonitor(GLFWmonitor *mon) { m_monitor = mon; return *this; }
-		inline create_window_args & setHint(int target, int hint) { m_hints[target] = hint; }
+		inline create_window_args & setHint(int target, int hint) { m_hints[target] = hint; return *this; }
 
 		inline Window * open() {
 			if (!glfwInit()) {

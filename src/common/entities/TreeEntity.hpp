@@ -1,0 +1,3 @@
+class TreeEntity : public Entity {
+
+};
