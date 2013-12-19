@@ -1,10 +1,11 @@
 #ifndef FRAME_HPP
 #define FRAME_HPP
 
+class SceneNode;
+class vec3;
+
 #include "common/sg/SceneNode.hpp"
 #include "common/Initial3D.hpp"
-
-class vec3;
 
 class Frame : public SceneNode {
 private:

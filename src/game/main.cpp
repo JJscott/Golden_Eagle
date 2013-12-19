@@ -9,12 +9,12 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include "Initial3D.hpp"
-#include "SceneRoot.hpp"
+#include "common/sg/SceneRoot.hpp"
 #include "TriangleEntity.hpp"
 
 #include "common/Log.hpp"
 #include "common/Config.hpp"
-#include "SceneNode.hpp"
+#include "common/sg/SceneNode.hpp"
 #include "loadOBJ.hpp"
 #include "loadBitmap.hpp"
 #include "common/Ambition.hpp"
