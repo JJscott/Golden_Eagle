@@ -9,8 +9,8 @@
 #include "server/Server.hpp"
 #include "common/Event.hpp"
 
-#include "common/sg/Scene.hpp"
-#include "common/entities/TreeEntity.hpp"
+#include "common/Scene.hpp"
+#include "common/TreeEntity.hpp"
 
 using namespace ambition;
 

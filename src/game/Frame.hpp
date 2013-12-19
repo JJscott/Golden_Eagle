@@ -1,21 +1,19 @@
 #ifndef FRAME_HPP
 #define FRAME_HPP
 
-#include "SceneNode.hpp"
-#include "Initial3D.hpp"
+#include "common/SceneNode.hpp"
+#include "common/Initial3D.hpp"
 
-class vec3;
-
-class Frame : virtual public SceneNode {
+class Frame : public SceneNode {
 private:
-	vec3* position;
+	initial3d::vec3d position;
 public:
 
 	const bool isRootNode() const {
 		return true;
 	}
 
-	vec3* getPosition() {
+	initial3d::vec3d getPosition() {
 		return this->position;
 	}
 };

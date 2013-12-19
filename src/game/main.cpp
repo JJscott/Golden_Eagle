@@ -8,13 +8,13 @@
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-#include "Initial3D.hpp"
-#include "SceneRoot.hpp"
-#include "TriangleEntity.hpp"
-
+#include "common/Initial3D.hpp"
 #include "common/Log.hpp"
 #include "common/Config.hpp"
-#include "SceneNode.hpp"
+
+#include "common/SceneRoot.hpp"
+#include "common/SceneNode.hpp"
+#include "TriangleEntity.hpp"
 #include "loadOBJ.hpp"
 #include "loadBitmap.hpp"
 #include "common/Ambition.hpp"
@@ -66,7 +66,7 @@ int main(void) {
 	
 	TriangleEntity myEntity;
 
-    rootScene.addChildNode(&myEntity);
+    //rootScene.addChildNode(&myEntity);
 
     //wm()->init();
     //Window *window = wm()->addWindow(1024, 768, "Golden_Eagle");

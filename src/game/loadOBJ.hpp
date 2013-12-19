@@ -9,7 +9,7 @@
 #include <cstring>
 #include <algorithm>
 
-#include "Initial3D.hpp"
+#include "common/Initial3D.hpp"
 
 using namespace std;
 using namespace initial3d;

@@ -1,6 +1,6 @@
 #include "Server.hpp"
 
-#include "common/sg/Scene.hpp"
+#include "common/Scene.hpp"
 
 
 Server::Server(bool shouldBePublic) {
