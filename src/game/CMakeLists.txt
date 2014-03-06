@@ -13,4 +13,4 @@ set_target_properties( game
 include_directories("${CMAKE_BINARY_DIR}/lib")
 
 add_definitions(-DGLEW_STATIC)
-target_link_libraries(game glew glfw common server ${GLFW_LIBRARIES})
+target_link_libraries(game glew glfw common ${GLFW_LIBRARIES})

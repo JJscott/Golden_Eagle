@@ -6,7 +6,7 @@
 #include "common/Config.hpp"
 #include "common/Socket.hpp"
 
-#include "server/Server.hpp"
+#include "common/Server.hpp"
 #include "common/Event.hpp"
 
 #include "common/Scene.hpp"

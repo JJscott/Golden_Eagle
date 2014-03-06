@@ -28,6 +28,5 @@ include_directories("${CMAKE_SOURCE_DIR}/src")
 
 add_subdirectory("./common")
 add_subdirectory("./server")
-add_subdirectory("./gamesrv")
 add_subdirectory("./game")
 
