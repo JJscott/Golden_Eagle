@@ -19,6 +19,9 @@ include_directories("${GOLDEN_SOURCE_DIR}/ext/glfw-3.0.3/include")
 add_subdirectory("${GOLDEN_SOURCE_DIR}/ext/glew-1.10.0" "${GOLDEN_BINARY_DIR}/ext/glew")
 include_directories("${GOLDEN_SOURCE_DIR}/ext/glew-1.10.0/include")
 
+# GTEST
+add_subdirectory("${GOLDEN_SOURCE_DIR}/ext/gtest" "${GOLDEN_BINARY_DIR}/ext/gtest")
+
 # compiler flags
 if(MSVC)
 	# Force to always compile with W4
