@@ -1,8 +1,8 @@
 #ifndef MOVABLEFRAME_HPP
 #define MOVABLEFRAME_HPP
 
-#include "common/Initial3D.hpp"
-#include "common/Frame.hpp"
+#include "ambition/Initial3D.hpp"
+#include "ambition/Frame.hpp"
 
 class MovableFrame : public Frame {
 private:

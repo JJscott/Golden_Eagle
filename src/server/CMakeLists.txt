@@ -1,20 +1,22 @@
-file(GLOB gamesrv_src "*.cpp" "*.c")
-file(GLOB gamesrv_header "*.hpp" "*.h")
 
-add_executable(server ${gamesrv_src} ${gamesrv_header})
+# get source files
+# we could list these manually...
+file(GLOB server_src "*.cpp" "*.c")
+file(GLOB server_hdr "*.hpp" "*.h")
 
-set_target_properties(server
+add_executable(server ${server_src} ${server_hdr})
+
+set_target_properties(
+	server
     PROPERTIES
-    ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
-    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
-    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+    LINKER_LANGUAGE CXX
 )
 
-include_directories("${CMAKE_BINARY_DIR}/lib")
-
+# wtf was this for? -ben
 # add_custom_command(TARGET server PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/res $<TARGET_FILE_DIR:gamesrv>/res)
+
+target_link_libraries(server ambition)
+
 if(WIN32)
-	target_link_libraries(server common wsock32)
-else()
-	target_link_libraries(server common)
+	target_link_libraries(server wsock32)
 endif()

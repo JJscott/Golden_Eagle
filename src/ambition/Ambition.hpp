@@ -7,9 +7,7 @@
 #ifndef AMBITION_HPP
 #define AMBITION_HPP
 
-// TODO server etc don't link to game object code, so avoid using game includes outside of game!
-// initial3d will be moved to common eventually, and is header-only so this is ok for now
-#include "common/Initial3D.hpp"
+#include "Initial3D.hpp"
 
 // TODO not be ugly - use vec3 and nan_error
 #define nearzeroconstant 0.0001

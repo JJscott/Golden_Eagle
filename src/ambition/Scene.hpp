@@ -1,8 +1,8 @@
 #ifndef SCENE_HPP
 #define SCENE_HPP
 
-#include "common/Entity.hpp"
-#include "common/SceneRoot.hpp"
+#include "ambition/Entity.hpp"
+#include "ambition/SceneRoot.hpp"
 
 class Scene {
 	SceneRoot root;

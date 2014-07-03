@@ -1,16 +1,21 @@
+
+# get source files
+# we could list these manually...
 file(GLOB game_src "*.cpp" "*.c")
-file(GLOB game_header "*.hpp" "*.h")
+file(GLOB game_hdr "*.hpp" "*.h")
 
-add_executable(game ${game_src} ${game_header})
+add_executable(game ${game_src} ${game_hdr})
 
-set_target_properties( game
+set_target_properties(
+	game
     PROPERTIES
-    ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
-    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
-    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+    LINKER_LANGUAGE CXX
 )
 
-include_directories("${CMAKE_BINARY_DIR}/lib")
-
 add_definitions(-DGLEW_STATIC)
-target_link_libraries(game glew glfw common ${GLFW_LIBRARIES})
+
+target_link_libraries(game glew glfw ambition ${GLFW_LIBRARIES})
+
+if(WIN32)
+	target_link_libraries(game wsock32)
+endif()

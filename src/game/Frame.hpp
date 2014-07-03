@@ -1,8 +1,8 @@
 #ifndef FRAME_HPP
 #define FRAME_HPP
 
-#include "common/SceneNode.hpp"
-#include "common/Initial3D.hpp"
+#include "ambition/SceneNode.hpp"
+#include "ambition/Initial3D.hpp"
 
 class Frame : public SceneNode {
 private:
