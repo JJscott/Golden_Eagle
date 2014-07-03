@@ -12,9 +12,9 @@
 #include <map>
 
 #include <GLFW/glfw3.h>
-#include "common/Ambition.hpp"
-#include "common/Log.hpp"
-#include "common/Event.hpp"
+#include "ambition/Ambition.hpp"
+#include "ambition/Log.hpp"
+#include "ambition/Event.hpp"
 
 namespace ambition {
 

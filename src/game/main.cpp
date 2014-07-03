@@ -8,20 +8,22 @@
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-#include "common/Initial3D.hpp"
-#include "common/Log.hpp"
-#include "common/Config.hpp"
 
-#include "common/SceneRoot.hpp"
-#include "common/SceneNode.hpp"
-#include "TriangleEntity.hpp"
+// ambition includes should be done like this, using <>
+#include <ambition/Initial3D.hpp>
+#include <ambition/Ambition.hpp>
+#include <ambition/Log.hpp>
+#include <ambition/Config.hpp>
+#include <ambition/SceneRoot.hpp>
+#include <ambition/SceneNode.hpp>
+#include <ambition/Event.hpp>
+
 #include "loadOBJ.hpp"
 #include "loadBitmap.hpp"
-#include "common/Ambition.hpp"
 #include "loadShader.hpp"
 #include "WindowManager.hpp"
-#include "common/Event.hpp"
 #include "Window.hpp"
+#include "TriangleEntity.hpp"
 
 #include "Shader.hpp"
 
@@ -60,17 +62,17 @@ int main(void) {
 	// e.detach(k);
 	// e.notify(&foo);
 
-	ShaderManager *shaderman = new ShaderManager("./res/shaders");
+	ShaderManager *shaderman = new ShaderManager("./res/shader");
 
 	log("System") % Log::idgaf << "Starting...";
 	
 	TriangleEntity myEntity;
 
-    //rootScene.addChildNode(&myEntity);
+	//rootScene.addChildNode(&myEntity);
 
-    //wm()->init();
-    //Window *window = wm()->addWindow(1024, 768, "Golden_Eagle");
-    //wm()->apply();
+	//wm()->init();
+	//Window *window = wm()->addWindow(1024, 768, "Golden_Eagle");
+	//wm()->apply();
 
 	Window *window = createWindow().setWidth(1024).setHeight(768).setTitle("Golden Eagle").open();
 
@@ -82,7 +84,7 @@ int main(void) {
 		cout << e.codepoint << ": " << char(e.codepoint) << endl;
 	});
 
-    glewExperimental = true;
+	glewExperimental = true;
 	GLenum glew_err = glewInit();
 	log("GLEW") << "Initialisation returned " << glew_err;
 	if (glew_err != GLEW_OK) {
@@ -96,152 +98,152 @@ int main(void) {
 	log("System") << "GL version string: " << glGetString(GL_VERSION);
 
 	// aa
-    GLuint VertexArrayID;
-    glGenVertexArrays(1, &VertexArrayID);
-    glBindVertexArray(VertexArrayID);
+	GLuint VertexArrayID;
+	glGenVertexArrays(1, &VertexArrayID);
+	glBindVertexArray(VertexArrayID);
 
-    std::vector<vec3d> vertices;
-    std::vector<vec3d> uvs;
-    std::vector<vec3d> normals;
-    unsigned int nTriangles = 0;
+	std::vector<vec3d> vertices;
+	std::vector<vec3d> uvs;
+	std::vector<vec3d> normals;
+	unsigned int nTriangles = 0;
 
-    loadOBJ("res/mdl/stump/stump.obj", vertices, uvs, normals, nTriangles);
-    // for(unsigned int i = 0; i < vertices.size(); i++) {
-        // std::cout << "Vert:" << vertices[i] << endl;
-    // }
-    // printf("# Vertices: %ld\n", vertices.size());
+	loadOBJ("res/model/stump/stump.obj", vertices, uvs, normals, nTriangles);
+	// for(unsigned int i = 0; i < vertices.size(); i++) {
+		// std::cout << "Vert:" << vertices[i] << endl;
+	// }
+	// printf("# Vertices: %ld\n", vertices.size());
 
-    //GLuint Tex = 
-    loadBMP("res/mdl/stump/diff.bmp");
+	//GLuint Tex = 
+	loadBMP("res/model/stump/diff.bmp");
 
-    GLuint vertexBuffer;
-    glGenBuffers(1, &vertexBuffer);
-    glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
+	GLuint vertexBuffer;
+	glGenBuffers(1, &vertexBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
 
 
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(vec3d), &vertices[0], GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(vec3d), &vertices[0], GL_STATIC_DRAW);
 
-    log() << "there are " << uvs.size() << " uvs";
-    GLuint colorBuffer;
-    glGenBuffers(1, &colorBuffer);
-    glBindBuffer(GL_ARRAY_BUFFER, colorBuffer);
-    glBufferData(GL_ARRAY_BUFFER, uvs.size() * sizeof(vec3d), &uvs[0], GL_STATIC_DRAW);
+	log() << "there are " << uvs.size() << " uvs";
+	GLuint colorBuffer;
+	glGenBuffers(1, &colorBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, colorBuffer);
+	glBufferData(GL_ARRAY_BUFFER, uvs.size() * sizeof(vec3d), &uvs[0], GL_STATIC_DRAW);
 
-    log() << "getting shaders";
-    GLuint programID = shaderman->getProgram("SimpleVertexShader.vert;SimpleVertexShader.frag");
-    log() << "got shaders";
+	log() << "getting shaders";
+	GLuint programID = shaderman->getProgram("SimpleVertexShader.vert;SimpleVertexShader.frag");
+	log() << "got shaders";
 
-    vec3d pos = vec3d(20, 20, 20);
-    vec3d look = vec3d(0, 0, 0);
-    vec3d up = vec3d(0, 1, 0);
+	vec3d pos = vec3d(20, 20, 20);
+	vec3d look = vec3d(0, 0, 0);
+	vec3d up = vec3d(0, 1, 0);
 
-    mat4d Projection =  createPerspectiveFOV(45, 4.0f / 3.0f, 0.1f, 10000.0f);
-    mat4d View = createLookAt(pos, look, up);
-    mat4d Model = mat4d(3.0f);
+	mat4d Projection =  createPerspectiveFOV(45, 4.0f / 3.0f, 0.1f, 10000.0f);
+	mat4d View = createLookAt(pos, look, up);
+	mat4d Model = mat4d(3.0f);
 
-    cout << "Pos: " << pos << endl << "Look: " << look << endl << "Up: " << up << endl;
-    cout << "Projection: " << endl << Projection << endl;
-    cout << "View: " << endl << View << endl;
-    cout << "Model: " << endl << Projection << endl;
+	cout << "Pos: " << pos << endl << "Look: " << look << endl << "Up: " << up << endl;
+	cout << "Projection: " << endl << Projection << endl;
+	cout << "View: " << endl << View << endl;
+	cout << "Model: " << endl << Projection << endl;
 
-    double longitude = 0;
-    double elevation = 20;
-    double zoom = 20;
+	double longitude = 0;
+	double elevation = 20;
+	double zoom = 20;
 
-    double lastFPSTime = glfwGetTime();
-    int fps = 0;
-    
-    // Vector3 vec();
-    
-    do {
-        glfwPollEvents();
+	double lastFPSTime = glfwGetTime();
+	int fps = 0;
+	
+	// Vector3 vec();
+	
+	do {
+		glfwPollEvents();
 
-        double now = glfwGetTime();
-        if (now - lastFPSTime > 1) {
-            char fpsString[100];
-            sprintf(fpsString, "FPS: %d", fps);
-            window->setTitle(fpsString);
-            fps = 0;
-            lastFPSTime = glfwGetTime();
-        }
-        fps++;
+		double now = glfwGetTime();
+		if (now - lastFPSTime > 1) {
+			char fpsString[100];
+			sprintf(fpsString, "FPS: %d", fps);
+			window->setTitle(fpsString);
+			fps = 0;
+			lastFPSTime = glfwGetTime();
+		}
+		fps++;
 
-        if (window->getKey(GLFW_KEY_A))
-            longitude -= 0.05f;
+		if (window->getKey(GLFW_KEY_A))
+			longitude -= 0.05f;
 		if (window->getKey(GLFW_KEY_D))
-            longitude += 0.05f;
+			longitude += 0.05f;
 
 		if (window->getKey(GLFW_KEY_W))
-            elevation += 0.1;
+			elevation += 0.1;
 		if (window->getKey(GLFW_KEY_S))
-            elevation -= 0.1;
+			elevation -= 0.1;
 
 		if (window->getKey(GLFW_KEY_E))
-            zoom += 1;
+			zoom += 1;
 		if (window->getKey(GLFW_KEY_Q))
-            zoom -= 1;
+			zoom -= 1;
 
-        if (zoom < 1)
-            zoom = 1;
-        else if (zoom > 30)
-            zoom = 30;
+		if (zoom < 1)
+			zoom = 1;
+		else if (zoom > 30)
+			zoom = 30;
 
-        if (longitude > initial3d::math::pi() * 2)
-            longitude -= (initial3d::math::pi() * 2);
+		if (longitude > initial3d::math::pi() * 2)
+			longitude -= (initial3d::math::pi() * 2);
 
-        if (elevation > 40)
-            elevation = 40;
-        if (elevation < 0)
-            elevation = 0;
+		if (elevation > 40)
+			elevation = 40;
+		if (elevation < 0)
+			elevation = 0;
 
-        pos = vec3d(cos(longitude) * zoom, elevation, sin(longitude) * zoom);
-        // cout << "Pos: " << pos << endl;
-        View = createLookAt(pos, look, up);
-        // cout << "View: " << endl << View << endl;
-        mat4d MVP = Projection * View * Model;
-        // cout << "MVP: " << endl << MVP << endl;
+		pos = vec3d(cos(longitude) * zoom, elevation, sin(longitude) * zoom);
+		// cout << "Pos: " << pos << endl;
+		View = createLookAt(pos, look, up);
+		// cout << "View: " << endl << View << endl;
+		mat4d MVP = Projection * View * Model;
+		// cout << "MVP: " << endl << MVP << endl;
 
 		int width = window->getWidth();
 		int height = window->getHeight();
 		glViewport(0, 0, width, height);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        glUseProgram(programID);
-        GLuint MatrixID = glGetUniformLocation(programID, "MVP");
-        glUniformMatrix4fv(MatrixID, 1, true, mat4f(MVP));
+		glUseProgram(programID);
+		GLuint MatrixID = glGetUniformLocation(programID, "MVP");
+		glUniformMatrix4fv(MatrixID, 1, true, mat4f(MVP));
 
-        glEnable(GL_DEPTH_TEST);
-        glDepthFunc(GL_LESS);
+		glEnable(GL_DEPTH_TEST);
+		glDepthFunc(GL_LESS);
 
-        glEnableVertexAttribArray(0);
-        glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-        glVertexAttribPointer(
-            0,
-            3,
-            GL_DOUBLE,
-            GL_FALSE,
-            32,
-            (void*)0
-        );
+		glEnableVertexAttribArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
+		glVertexAttribPointer(
+			0,
+			3,
+			GL_DOUBLE,
+			GL_FALSE,
+			32,
+			(void*)0
+		);
 
-        glEnableVertexAttribArray(1);
-        glBindBuffer(GL_ARRAY_BUFFER, colorBuffer);
-        glVertexAttribPointer(
-            1,
-            3,
-            GL_DOUBLE,
-            GL_FALSE,
-            32,
-            (void*)0
-        );
+		glEnableVertexAttribArray(1);
+		glBindBuffer(GL_ARRAY_BUFFER, colorBuffer);
+		glVertexAttribPointer(
+			1,
+			3,
+			GL_DOUBLE,
+			GL_FALSE,
+			32,
+			(void*)0
+		);
 
-        glDrawArrays(GL_TRIANGLES, 0, nTriangles*3);
-        // glDisableVertexAttribArray(0);
+		glDrawArrays(GL_TRIANGLES, 0, nTriangles*3);
+		// glDisableVertexAttribArray(0);
 		glFinish();
 		window->swapBuffers();
-    } while(!window->shouldClose());
+	} while(!window->shouldClose());
 
-    delete window;
-    glfwTerminate();
-    std::exit(EXIT_SUCCESS);
+	delete window;
+	glfwTerminate();
+	std::exit(EXIT_SUCCESS);
 }

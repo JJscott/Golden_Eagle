@@ -1,7 +1,7 @@
 #ifndef SERVER_HPP
 #define SERVER_HPP
 
-#include "common/Log.hpp"
+#include "ambition/Log.hpp"
 
 using namespace ambition;
 

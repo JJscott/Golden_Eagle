@@ -2,15 +2,13 @@
 #include <cstdlib>
 #include <iostream>
 
-#include "common/Log.hpp"
-#include "common/Config.hpp"
-#include "common/Socket.hpp"
-
-#include "common/Server.hpp"
-#include "common/Event.hpp"
-
-#include "common/Scene.hpp"
-#include "common/TreeEntity.hpp"
+#include "ambition/Log.hpp"
+#include "ambition/Config.hpp"
+#include "ambition/Socket.hpp"
+#include "ambition/Server.hpp"
+#include "ambition/Event.hpp"
+#include "ambition/Scene.hpp"
+#include "ambition/TreeEntity.hpp"
 
 using namespace ambition;
 
