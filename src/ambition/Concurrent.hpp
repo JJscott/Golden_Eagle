@@ -2,7 +2,7 @@
 #define AMBITION_CONCURRENT_HPP
 
 #include <cassert>
-#include <stdexcept>
+#include <exception>
 #include <map>
 #include <vector>
 #include <deque>
@@ -17,9 +17,11 @@
 
 namespace ambition {
 
-	class interruption : public std::runtime_error {
+	class interruption : public std::exception {
 	public:
-		interruption(const std::string &what_ = "condition variable wait interrupted") : std::runtime_error(what_) { }
+		virtual const char * what() const override {
+			return "condition variable wait interrupted";
+		}
 	};
 
 	// High-level mechanism for providing interruption of condition variable waiting.
