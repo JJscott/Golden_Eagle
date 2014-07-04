@@ -157,6 +157,8 @@ namespace ambition {
 		std::time_t tt = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 
 		AsyncExecutor::enqueueBackground([=] {
+			std::lock_guard<std::mutex> lock(m_mutex);
+
 			std::string ts = std::string(ctime(&tt));
 			ts.pop_back();
 
