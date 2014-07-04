@@ -14,7 +14,7 @@
 #include <GLFW/glfw3.h>
 #include "ambition/Ambition.hpp"
 #include "ambition/Log.hpp"
-#include "ambition/Event.hpp"
+#include "ambition/Concurrent.hpp"
 
 namespace ambition {
 
@@ -190,7 +190,7 @@ namespace ambition {
 
 		inline Window * open() {
 			if (!glfwInit()) {
-				log("GLFW") % Log::nope << "Initialisation failed";
+				log("GLFW").error() << "Initialisation failed";
 				throw window_error("GLFW initialisation failed");
 			}
 			glfwDefaultWindowHints();
@@ -200,7 +200,7 @@ namespace ambition {
 			GLFWwindow *handle = glfwCreateWindow(m_width, m_height, m_title.c_str(), NULL, NULL);
 			glfwDefaultWindowHints();
 			if (!handle) {
-				log("GLFW") % Log::nope << "Window creation failed, title=" << m_title;
+				log("GLFW").error() << "Window creation failed, title=" << m_title;
 				throw window_error("Window creation failed");
 			}
 			glfwMakeContextCurrent(handle);

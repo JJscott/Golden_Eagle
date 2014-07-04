@@ -8,7 +8,7 @@ Server::Server(bool shouldBePublic) {
 }
 
 void Server::start() {
-	log("Server") % Log::idgaf << "Started!";	
+	log("Server") % 0 << "Started!";	
 
 	Scene *s = new Scene;
 }

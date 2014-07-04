@@ -1,4 +1,6 @@
+
 #include "Log.hpp"
+#include "Concurrent.hpp"
 
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
@@ -112,6 +114,7 @@ namespace ambition {
 
 #else
 		// use unix escape codes
+		// TODO these should only do anything on cout and cerr
 
 		// Reset Color
 		std::ostream & reset(std::ostream &o) { o << "\033[0m"; return o; }
@@ -139,12 +142,41 @@ namespace ambition {
 
 	}
 
-	const char * const Log::s_level_names[] = { "Information", "Warning", "Error", "Critical", "NOPE", "IDGAF" };
+	std::unordered_set<LogOutput *> Log::m_outputs;
+	std::mutex Log::m_mutex;
+	LogOutput * const Log::m_cout = new ColoredStreamLogOutput(&std::cout, true);
+	LogOutput * const Log::m_cerr = new ColoredStreamLogOutput(&std::cerr, false);
 
-	std::unordered_set<LogOutput *> * Log::s_outputs = new std::unordered_set<LogOutput *>();
-	LogOutput * const Log::s_cout = new ColoredStreamLogOutput(&std::cout, true);
-	LogOutput * const Log::s_cerr = new ColoredStreamLogOutput(&std::cerr, false);
+	void Log::write(unsigned verbosity, unsigned type, const std::string &source, const std::string &msg) {
+		// better format maybe?
+		// Wed May 30 12:25:03 2012 [System] Error : IT BROEK
 
-	std::mutex Log::s_lock_write;
+		static const char *typestr[] = { "Information", "Warning", "Error", "???" };
+		type = type < 3 ? type : 3;
+
+		std::time_t tt = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+
+		AsyncExecutor::enqueueBackground([=] {
+			std::string ts = std::string(ctime(&tt));
+			ts.pop_back();
+
+			std::ostringstream ss;
+			ss << ts;
+			ss << " [" << std::setw(15) << source << "] ";
+			ss << std::setw(11) << typestr[type] << " : ";
+			ss << msg;
+			ss << '\n';
+
+			// write to stderr and stdout
+			m_cerr->write(verbosity, type, ss.str());
+			m_cout->write(verbosity, type, ss.str());
+
+			// write to all others
+			for (LogOutput *out : m_outputs) {
+				out->write(verbosity, type, ss.str());
+			}
+		});
+		
+	}
 
 }

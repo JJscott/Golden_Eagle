@@ -16,7 +16,7 @@
 #include <ambition/Config.hpp>
 #include <ambition/SceneRoot.hpp>
 #include <ambition/SceneNode.hpp>
-#include <ambition/Event.hpp>
+#include <ambition/Concurrent.hpp>
 
 #include "loadOBJ.hpp"
 #include "loadBitmap.hpp"
@@ -39,7 +39,36 @@ using namespace ambition;
 // }
 
 int main(void) {
-	Log::getStandardErr()->setMinLevel(Log::information);
+	log("System") % 0 << "Starting...";
+
+	AsyncExecutor::start();
+	
+	log().error() % 2 << "minor error";
+	log().error() << "proper error";
+
+	log().warning() % 2 << "minor warning";
+	log().warning() << "proper warning";
+
+	log() << std::endl;
+
+	Event<int> event;
+
+	cin.get();
+
+	thread t([&]() mutable {
+
+		try {
+			event.wait();
+		} catch (interruption &e) {
+			cout << "INTERRUPTED" << endl;
+		}
+
+	});
+
+	InterruptManager::interrupt(t.get_id());
+
+	t.join();
+
 
 	// int foo = 9001;
 
@@ -64,8 +93,6 @@ int main(void) {
 
 	ShaderManager *shaderman = new ShaderManager("./res/shader");
 
-	log("System") % Log::idgaf << "Starting...";
-	
 	TriangleEntity myEntity;
 
 	//rootScene.addChildNode(&myEntity);
@@ -76,19 +103,21 @@ int main(void) {
 
 	Window *window = createWindow().setWidth(1024).setHeight(768).setTitle("Golden Eagle").open();
 
-	window->onScroll.attach([](mouse_scroll_event e) {
+	window->onScroll.attach([](const mouse_scroll_event &e) {
 		cout << e.offset.h << endl;
+		return false;
 	});
 
-	window->onChar.attach([](char_event e) {
+	window->onChar.attach([](const char_event &e) {
 		cout << e.codepoint << ": " << char(e.codepoint) << endl;
+		return false;
 	});
 
 	glewExperimental = true;
 	GLenum glew_err = glewInit();
 	log("GLEW") << "Initialisation returned " << glew_err;
 	if (glew_err != GLEW_OK) {
-		log("GLEW") % Log::nope << "Initialisation failed: " << glewGetErrorString(glew_err) << endl;
+		log("GLEW").error() << "Initialisation failed: " << glewGetErrorString(glew_err) << endl;
 		glfwTerminate();
 		cin.get();
 		std::exit(9001);
@@ -96,6 +125,8 @@ int main(void) {
 	log("GLEW") << "Initialised";
 
 	log("System") << "GL version string: " << glGetString(GL_VERSION);
+
+	std::cin.get();
 
 	// aa
 	GLuint VertexArrayID;
@@ -245,5 +276,8 @@ int main(void) {
 
 	delete window;
 	glfwTerminate();
+
+	AsyncExecutor::stop();
+
 	std::exit(EXIT_SUCCESS);
 }

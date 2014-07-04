@@ -7,6 +7,9 @@
 #ifndef AMBITION_HPP
 #define AMBITION_HPP
 
+#include <cassert>
+#include <string>
+
 #include "Initial3D.hpp"
 
 // TODO not be ugly - use vec3 and nan_error

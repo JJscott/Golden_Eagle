@@ -37,8 +37,7 @@ int main() {
 	Scene *scene = new Scene;
 	scene->addEntity(new TreeEntity);
 	
-	log("System") % Log::idgaf << "Starting...";
-	Log::getStandardOut()->setMinLevel(Log::error);
+	log("System") % 0 << "Starting...";
 	// log("ConfigTest") % Log::idgaf << conf.get("test", "abc");
 
 	//EventTest et;

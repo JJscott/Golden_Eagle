@@ -47,33 +47,33 @@ namespace ambition {
 		LogOutput(const LogOutput &rhs) = delete;
 		LogOutput & operator=(const LogOutput &rhs) = delete;
 		
-		unsigned m_min_level = 0;
+		unsigned m_verbosity = 2;
 		bool m_mute = false;
 
 	protected:
-		virtual void write_impl(unsigned level, const std::string &str) = 0;
+		virtual void write_impl(unsigned verbosity, unsigned type, const std::string &str) = 0;
 
 	public:
 		LogOutput(bool mute_ = false) : m_mute(mute_) { }
 
-		inline unsigned getMinLevel() {
-			return m_min_level;
+		inline unsigned verbosity() {
+			return m_verbosity;
 		}
 
-		inline void setMinLevel(unsigned level) {
-			m_min_level = level;
+		inline void verbosity(unsigned v) {
+			m_verbosity = v;
 		}
 
-		inline bool getMute() {
+		inline bool mute() {
 			return m_mute;
 		}
 
-		inline void setMute(bool b) {
+		inline void mute(bool b) {
 			m_mute = b;
 		}
 
-		virtual void write(unsigned level, const std::string &str) {
-			if (!m_mute && level >= m_min_level) write_impl(level, str);
+		inline void write(unsigned verbosity, unsigned type, const std::string &str) {
+			if (!m_mute && verbosity <= m_verbosity) write_impl(verbosity, type, str);
 		}
 
 		virtual ~LogOutput() { }
@@ -86,106 +86,82 @@ namespace ambition {
 		Log(const Log &rhs) = delete;
 		Log & operator=(const Log &rhs) = delete;
 
-		static const char * const s_level_names[];
-
-		static std::unordered_set<LogOutput *> * s_outputs;
+		static std::mutex m_mutex;
+		static std::unordered_set<LogOutput *> m_outputs;
 
 		// cout starts muted, cerr starts non-muted
-		static LogOutput * const s_cout;
-		static LogOutput * const s_cerr;
-
-		static std::mutex s_lock_write;
+		static LogOutput * const m_cout;
+		static LogOutput * const m_cerr;
 
 	public:
 		static const unsigned information = 0;
 		static const unsigned warning = 1;
 		static const unsigned error = 2;
-		static const unsigned critical = 3;
-		static const unsigned nope = 4;
-		static const unsigned idgaf = 5;
-		static const unsigned max = idgaf;
 
-		static inline void write(unsigned level, const std::string &source, const std::string &msg) {
-			// better format maybe?
-			// Wed May 30 12:25:03 2012 [System] Error : IT BROEK
-			std::lock_guard<std::mutex> guard(s_lock_write);
+		static void write(unsigned verbosity, unsigned type, const std::string &source, const std::string &msg);
 
-			level = level > max ? max : level;
-			std::time_t tt = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-			std::ostringstream ss;
-
-			std::string ts = std::string(ctime(&tt));
-			ts.pop_back();
-
-			ss << ts;
-			ss << " [" << std::setw(15) << source << "] ";
-			ss << std::setw(11) << s_level_names[level] << " : ";
-			ss << msg;
-			ss << '\n';
-
-			// write to stderr and stdout
-			s_cerr->write(level, ss.str());
-			s_cout->write(level, ss.str());
-
-			// write to all others
-			for (LogOutput *out : *s_outputs) {
-				out->write(level, ss.str());
-			}
+		static inline void addOutput(LogOutput &out) {
+			std::lock_guard<std::mutex> lock(m_mutex);
+			m_outputs.insert(&out);
 		}
 
-		static inline void addOutput(LogOutput *out) {
-			s_outputs->insert(out);
+		static inline void removeOutput(LogOutput &out) {
+			std::lock_guard<std::mutex> lock(m_mutex);
+			m_outputs.erase(&out);
 		}
 
-		static inline void removeOutput(LogOutput *out) {
-			s_outputs->erase(out);
+		static inline LogOutput & stdOut() {
+			return *m_cout;
 		}
 
-		static inline LogOutput * getStandardOut() {
-			return s_cout;
-		}
-
-		static inline LogOutput * getStandardErr() {
-			return s_cerr;
+		static inline LogOutput & stdErr() {
+			return *m_cerr;
 		}
 
 	};
 
+	// log output that writes to a std::ostream
 	class StreamLogOutput : public LogOutput {
 	private:
 		std::ostream *m_out;
 
 	protected:
-		virtual void write_impl(unsigned, const std::string &str) override {
+		virtual void write_impl(unsigned, unsigned, const std::string &str) override {
 			(*m_out) << str;
 		}
 
-		inline std::ostream *getStream() {
-			return m_out;
+		inline std::ostream & getStream() {
+			return *m_out;
 		}
 
 	public:
 		explicit inline StreamLogOutput(std::ostream *out_, bool mute_ = false) : LogOutput(mute_), m_out(out_) { }
 	};
 
+	// log output for writing to std::cout or std::cerr (as they are the only streams with reliable color support)
 	class ColoredStreamLogOutput : public StreamLogOutput {
 	protected:
-		virtual void write_impl(unsigned level, const std::string &str) override {
-			std::ostream &out = *getStream();
+		virtual void write_impl(unsigned verbosity, unsigned type, const std::string &str) override {
+			std::ostream &out = getStream();
 			using namespace std;
-			switch (level) {
-			case Log::warning:
-				out << termcolor::yellow; break;
-			case Log::error:
-				out << termcolor::boldRed; break;
-			case Log::critical:
-				out << termcolor::red; break;
-			case Log::nope:
-				out << termcolor::purple; break;
-			case Log::idgaf:
-				out << termcolor::blue; break;
-			default:
-				out << termcolor::reset;
+			if (verbosity == 0) {
+				switch (type) {
+				case Log::warning:
+					out << termcolor::boldYellow; break;
+				case Log::error:
+					out << termcolor::boldRed; break;
+				default:
+					out << termcolor::boldCyan;
+				}
+			} else {
+				switch (type) {
+				case Log::warning:
+					out << termcolor::yellow; break;
+				case Log::error:
+					out << termcolor::red; break;
+				default:
+					out << termcolor::reset;
+				}
 			}
 			out << str;
 			out << termcolor::reset;
@@ -198,11 +174,16 @@ namespace ambition {
 
 	class FileLogOutput : public StreamLogOutput {
 	private:
-		// dtor should take care of closing this
 		std::ofstream m_out;
 
 	public:
-		explicit inline FileLogOutput(const std::string &fname_, std::ios_base::openmode mode_ = std::ios_base::trunc, bool mute_ = false) : StreamLogOutput(&m_out, mute_) {
+		explicit inline FileLogOutput(
+			const std::string &fname_,
+			std::ios_base::openmode mode_ = std::ios_base::trunc,
+			bool mute_ = false
+		) :
+			StreamLogOutput(&m_out, mute_)
+		{
 			m_out.open(fname_, mode_);
 		}
 	};
@@ -210,8 +191,9 @@ namespace ambition {
 	template <typename CharT>
 	class basic_logstream : public std::basic_ostream<CharT> {
 	private:
+		unsigned m_verbosity;
+		unsigned m_type;
 		std::string m_source;
-		unsigned m_level;
 		std::basic_stringbuf<CharT> m_buf;
 		bool m_write;
 
@@ -219,32 +201,55 @@ namespace ambition {
 		basic_logstream & operator=(const basic_logstream &rhs) = delete;
 
 	public:
-		basic_logstream(const std::string &source_) : 
+		// main ctor; sets type to Log::information and verbosity to 2
+		basic_logstream(const std::string &source_) :
 			std::basic_ostream<CharT>(&m_buf),
+			m_verbosity(2),
+			m_type(Log::information),
 			m_source(source_),
-			m_level(0),
-			m_write(true) { }
+			m_write(true)
+		{ }
 
-		// copy ctor takes over responsibility for writing to log
-		basic_logstream(basic_logstream &&rhs) : m_buf(rhs.m_buf.str()), m_write(true) {
+		// move ctor; takes over responsibility for writing to log
+		basic_logstream(basic_logstream &&rhs) :
+			m_verbosity(rhs.m_verbosity),
+			m_type(rhs.m_type),
+			m_source(rhs.m_source),
+			m_buf(rhs.m_buf.str()),
+			m_write(rhs.m_write)
+		{
 			rhs.m_write = false;
 		}
 
-		// set level
-		basic_logstream & operator%(unsigned level) {
-			m_level = level;
+		// set type to Log::warning and verbosity to 1
+		basic_logstream & warning() {
+			m_type = Log::warning;
+			m_verbosity = 0;
+			return *this;
+		}
+
+		// set type to Log::error and verbosity to 0
+		basic_logstream & error() {
+			m_type = Log::error;
+			m_verbosity = 0;
+			return *this;
+		}
+
+		// set verbosity
+		basic_logstream & operator%(unsigned verbosity) {
+			m_verbosity = verbosity;
 			return *this;
 		}
 
 		~basic_logstream() {
 			if (m_write) {
-				Log::write(m_level, m_source, m_buf.str());
+				Log::write(m_verbosity, m_type, m_source, m_buf.str());
 			}
 		}
 
 	};
-
-	typedef basic_logstream<char> logstream;
+	
+	using logstream = basic_logstream<char>;
 
 	inline logstream log(const std::string &source) {
 		return logstream(source);
