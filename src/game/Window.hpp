@@ -44,6 +44,70 @@ namespace ambition {
 	using size2i = size2<int>;
 	using size2d = size2<double>;
 
+	template <typename T>
+	inline point2<T> operator*(const point2<T> &lhs, const T &rhs) {
+		point2<T> r;
+		r.x = lhs.x * rhs;
+		r.y = lhs.y * rhs;
+		return r;
+	}
+
+	template <typename T>
+	inline point2<T> operator/(const point2<T> &lhs, const T &rhs) {
+		point2<T> r;
+		r.x = lhs.x / rhs;
+		r.y = lhs.y / rhs;
+		return r;
+	}
+
+	template <typename T>
+	inline size2<T> operator*(const size2<T> &lhs, const T &rhs) {
+		size2<T> r;
+		r.w = lhs.w * rhs;
+		r.h = lhs.h * rhs;
+		return r;
+	}
+
+	template <typename T>
+	inline size2<T> operator/(const size2<T> &lhs, const T &rhs) {
+		size2<T> r;
+		r.w = lhs.w / rhs;
+		r.h = lhs.h / rhs;
+		return r;
+	}
+
+	template <typename T>
+	inline point2<T> operator+(const point2<T> &lhs, const size2<T> &rhs) {
+		point2<T> r;
+		r.x = lhs.x + rhs.w;
+		r.y = lhs.y + rhs.h;
+		return r;
+	}
+
+	template <typename T>
+	inline point2<T> operator-(const point2<T> &lhs, const size2<T> &rhs) {
+		point2<T> r;
+		r.x = lhs.x - rhs.w;
+		r.y = lhs.y - rhs.h;
+		return r;
+	}
+
+	template <typename T>
+	inline size2<T> operator+(const size2<T> &lhs, const size2<T> &rhs) {
+		size2<T> r;
+		r.w = lhs.w + rhs.w;
+		r.h = lhs.h + rhs.h;
+		return r;
+	}
+
+	template <typename T>
+	inline size2<T> operator-(const size2<T> &lhs, const size2<T> &rhs) {
+		size2<T> r;
+		r.w = lhs.w - rhs.w;
+		r.h = lhs.h - rhs.h;
+		return r;
+	}
+
 	// forward declaration
 	class Window;
 
