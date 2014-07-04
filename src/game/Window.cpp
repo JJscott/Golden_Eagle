@@ -1,4 +1,6 @@
 
+#include <cassert>
+#include <cstdlib>
 #include <map>
 #include <bitset>
 
@@ -9,6 +11,7 @@ namespace ambition {
 	namespace {
 		struct WindowData {
 			Window *window;
+			GLEWContext context;
 			std::bitset<GLFW_KEY_LAST + 1> vk;
 			std::bitset<GLFW_MOUSE_BUTTON_LAST + 1> mb;
 			WindowData(Window *window_) : window(window_) { }
@@ -175,6 +178,36 @@ namespace ambition {
 			e.codepoint = codepoint;
 			win->onChar.notify(e);
 		}
+
+		void callbackError(int error, const char *description) {
+			log("GLFW").error() << "Error " << error << " : " << description;
+		}
+
+		// init GLFW global state.
+		// this should only be called from the main thread.
+		// does nothing if already initialised.
+		void init_glfw() {
+			static bool done = false;
+			if (!done) {
+				log("Window") % 0 << "GLFW initialising...";
+				if (!glfwInit()) {
+					log("Window").error() << "GLFW initialisation failed";
+					throw window_error("GLFW initialisation failed");
+				}
+				glfwSetErrorCallback(callbackError);
+				log("Window") % 0 << "GLFW initialised";
+				done = true;
+			}
+		}
+
+	}
+
+	void * glewGetContextImpl() {
+		GLFWwindow *handle = glfwGetCurrentContext();
+		if (!handle) {
+			throw window_error("no current context");
+		}
+		return &(getWindowData(handle)->context);
 	}
 
 	void Window::initialise() {
@@ -201,6 +234,28 @@ namespace ambition {
 		glfwDestroyWindow(m_handle);
 	}
 
+	void Window::makeContextCurrent() {
+		glfwMakeContextCurrent(m_handle);
+		// init glew
+		if (!m_glew_init_done) {
+			log("Window") % 0 << "GLEW initialising...";
+			glewExperimental = true;
+			GLenum glew_err = glewInit();
+			log("Window") << "GLEW initialisation returned " << glew_err;
+			if (glew_err != GLEW_OK) {
+				log("Window").error() << "GLEW initialisation failed: " << glewGetErrorString(glew_err);
+				glfwTerminate();
+				std::abort();
+			}
+			// clear any GL error from glew init
+			GLenum gl_err = glGetError();
+			log("Window") << "GLEW initialistion left GL error " << gl_err;
+			log("Window") << "GL version string: " << glGetString(GL_VERSION);
+			log("Window") % 0 << "GLEW initialised";
+			m_glew_init_done = true;
+		}
+	}
+
 	bool Window::getKey(int key) {
 		return getWindowData(m_handle)->vk.test(key);
 	}
@@ -222,5 +277,24 @@ namespace ambition {
 		wd->mb.reset(button);
 		return b;
 	}
+
+	// this should only be called from the main thread
+	create_window_args::operator Window * () {
+		log("Window") % 0 << "GLFW creating window... [title=" << m_title << "]";
+		init_glfw();
+		glfwDefaultWindowHints();
+		for (auto me : m_hints) {
+			glfwWindowHint(me.first, me.second);
+		}
+		GLFWwindow *handle = glfwCreateWindow(m_size.w, m_size.h, m_title.c_str(), m_monitor, m_share ? m_share->handle() : nullptr);
+		glfwDefaultWindowHints();
+		if (!handle) {
+			log("Window").error() << "GLFW window creation failed";
+			throw window_error("GLFW window creation failed");
+		}
+		log("Window") % 0 << "GLFW window created";
+		return new Window(handle);
+	}
+
 
 }

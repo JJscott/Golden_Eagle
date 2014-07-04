@@ -11,3 +11,5 @@ set_target_properties(
     PROPERTIES
     LINKER_LANGUAGE CXX
 )
+
+add_definitions(-DGLEW_STATIC -DGLEW_MX)

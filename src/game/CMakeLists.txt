@@ -12,7 +12,7 @@ set_target_properties(
     LINKER_LANGUAGE CXX
 )
 
-add_definitions(-DGLEW_STATIC)
+add_definitions(-DGLEW_STATIC -DGLEW_MX)
 
 target_link_libraries(game glew glfw ambition ${GLFW_LIBRARIES})
 

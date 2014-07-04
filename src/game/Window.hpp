@@ -11,10 +11,16 @@
 #include <stdexcept>
 #include <map>
 
+// this is to enable multiple context support
+namespace ambition {
+	void * glewGetContextImpl();
+}
+#define glewGetContext() ((GLEWContext *) ambition::glewGetContextImpl())
+#include <GL/glew.h>
 #include <GLFW/glfw3.h>
-#include "ambition/Ambition.hpp"
-#include "ambition/Log.hpp"
-#include "ambition/Concurrent.hpp"
+
+#include <ambition/Log.hpp>
+#include <ambition/Concurrent.hpp>
 
 namespace ambition {
 
@@ -130,9 +136,12 @@ namespace ambition {
 		explicit window_error(const std::string &what_ = "Window Error") : runtime_error(what_) { }
 	};
 
+	// Thin wrapper around GLFW windowing.
+	// Each window can only be used on one thread at once.
 	class Window : private Uncopyable {
 	private:
 		GLFWwindow* m_handle;
+		bool m_glew_init_done = false;
 
 		void initialise();
 		void destroy();
@@ -161,24 +170,72 @@ namespace ambition {
 		Event<key_event> onKeyRelease;
 		Event<char_event> onChar;
 
-		Window(GLFWwindow *handle_) : m_handle(handle_) {
+		inline Window(GLFWwindow *handle_) : m_handle(handle_) {
 			if (m_handle == nullptr) throw window_error("GLFW window handle is null");
 			initialise();
 		}
 
-		GLFWwindow * getHandle() const {
+		inline GLFWwindow * handle() const {
 			return m_handle;
 		}
 
-		void setSize(int w, int h) {
+		inline void pos(int x, int y) {
+			glfwSetWindowPos(m_handle, x, y);
+		}
+
+		inline void pos(const point2i &p) {
+			glfwSetWindowPos(m_handle, p.x, p.y);
+		}
+
+		inline point2i pos() const {
+			point2i p;
+			glfwGetWindowPos(m_handle, &p.x, &p.y);
+			return p;
+		}
+
+		inline void size(int w, int h) {
 			glfwSetWindowSize(m_handle, w, h);
 		}
 
-		void setTitle(const std::string &s) {
+		inline void size(const size2i &s) {
+			glfwSetWindowSize(m_handle, s.w, s.h);
+		}
+
+		inline size2i size() const {
+			size2i s;
+			glfwGetWindowSize(m_handle, &s.w, &s.h);
+			return s;
+		}
+
+		inline void width(int w) {
+			size2i s = size();
+			s.w = w;
+			size(s);
+		}
+
+		inline int width() const {
+			int w, h;
+			glfwGetWindowSize(m_handle, &w, &h);
+			return w;
+		}
+
+		inline void height(int h) {
+			size2i s = size();
+			s.h = h;
+			size(s);
+		}
+
+		inline int height() const {
+			int w, h;
+			glfwGetWindowSize(m_handle, &w, &h);
+			return h;
+		}
+
+		inline void title(const std::string &s) {
 			glfwSetWindowTitle(m_handle, s.c_str());
 		}
 
-		void setVisible(bool b) {
+		inline void visible(bool b) {
 			if (b) {
 				glfwShowWindow(m_handle);
 			} else {
@@ -186,28 +243,18 @@ namespace ambition {
 			}
 		}
 
-		int getWidth() const {
-			int w, h;
-			glfwGetWindowSize(m_handle, &w, &h);
-			return w;
-		}
-
-		int getHeight() const {
-			int w, h;
-			glfwGetWindowSize(m_handle, &w, &h);
-			return h;
-		}
-
-		bool shouldClose() const {
+		inline bool shouldClose() const {
 			return glfwWindowShouldClose(m_handle);
 		}
 
-		void makeContextCurrent() const {
-			glfwMakeContextCurrent(m_handle);
+		void makeContextCurrent();
+
+		inline void swapBuffers() const {
+			glfwSwapBuffers(m_handle);
 		}
 
-		void swapBuffers() const {
-			glfwSwapBuffers(m_handle);
+		inline int attrib(int a) const {
+			return glfwGetWindowAttrib(m_handle, a);
 		}
 
 		// get current state of a key
@@ -222,18 +269,17 @@ namespace ambition {
 		// get the current state of a mouse button, then clear it
 		bool pollMouseButton(int button);
 
-		~Window() {
+		inline ~Window() {
 			destroy();
 		}
 	};
 
-
 	class create_window_args {
 	private:
-		int m_width = 640;
-		int m_height = 480;
+		size2i m_size = size2i(512, 512);
 		std::string m_title = "";
 		GLFWmonitor *m_monitor = nullptr;
+		const Window *m_share = nullptr;
 		std::map<int, int> m_hints;
 
 	public:
@@ -241,36 +287,25 @@ namespace ambition {
 			m_hints[GLFW_OPENGL_PROFILE] = GLFW_OPENGL_CORE_PROFILE;
 			m_hints[GLFW_CONTEXT_VERSION_MAJOR] = 3;
 			m_hints[GLFW_CONTEXT_VERSION_MINOR] = 3;
-			// multisampling becomes complicated with some of the stuff i have in mind -Ben
-			m_hints[GLFW_SAMPLES] = 4;
+			m_hints[GLFW_OPENGL_FORWARD_COMPAT] = true;
+			m_hints[GLFW_SAMPLES] = 0;
+			m_hints[GLFW_VISIBLE] = false;
 		}
 
-		inline create_window_args & setWidth(int w) { m_width = w; return *this; }
-		inline create_window_args & setHeight(int h) { m_height = h; return *this; }
-		inline create_window_args & setSize(int w, int h) { m_width = w; m_height = h; return *this; }
-		inline create_window_args & setTitle(const std::string &title) { m_title = title; return *this; }
-		inline create_window_args & setMonitor(GLFWmonitor *mon) { m_monitor = mon; return *this; }
-		inline create_window_args & setHint(int target, int hint) { m_hints[target] = hint; return *this; }
+		inline create_window_args & width(int w) { m_size.w = w; return *this; }
+		inline create_window_args & height(int h) { m_size.h = h; return *this; }
+		inline create_window_args & size(int w, int h) { m_size.w = w; m_size.h = h; return *this; }
+		inline create_window_args & size(size2i s) { m_size = s; return *this; }
+		inline create_window_args & title(const std::string &title) { m_title = title; return *this; }
+		inline create_window_args & monitor(GLFWmonitor *mon) { m_monitor = mon; return *this; }
+		inline create_window_args & visible(bool b) { m_hints[GLFW_VISIBLE] = b; return *this; }
+		inline create_window_args & resizable(bool b) { m_hints[GLFW_RESIZABLE] = b; return *this; }
+		inline create_window_args & debug(bool b) { m_hints[GLFW_OPENGL_DEBUG_CONTEXT] = b; return *this; }
+		inline create_window_args & share(const Window *win) { m_share = win; return *this; }
+		inline create_window_args & hint(int target, int hint) { m_hints[target] = hint; return *this; }
 
-		inline Window * open() {
-			if (!glfwInit()) {
-				log("GLFW").error() << "Initialisation failed";
-				throw window_error("GLFW initialisation failed");
-			}
-			glfwDefaultWindowHints();
-			for (auto me : m_hints) {
-				glfwWindowHint(me.first, me.second);
-			}
-			GLFWwindow *handle = glfwCreateWindow(m_width, m_height, m_title.c_str(), NULL, NULL);
-			glfwDefaultWindowHints();
-			if (!handle) {
-				log("GLFW").error() << "Window creation failed, title=" << m_title;
-				throw window_error("Window creation failed");
-			}
-			glfwMakeContextCurrent(handle);
-			log("GLFW") << "Window created";
-			return new Window(handle);
-		}
+		// this should only be called from the main thread
+		operator Window * ();
 
 	};
 

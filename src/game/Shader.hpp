@@ -11,7 +11,6 @@
 #ifndef INITIAL3D_SHADER_H
 #define INITIAL3D_SHADER_H
 
-#include <GL/glew.h>
 #include <cstdlib>
 #include <cstdio>
 #include <iostream>
@@ -21,6 +20,8 @@
 #include <vector>
 #include <algorithm>
 #include <stdexcept>
+
+#include "Window.hpp"
 
 namespace initial3d {
 

@@ -1,3 +1,4 @@
+
 #include <cstdlib>
 #include <cstdio>
 #include <iostream>
@@ -6,8 +7,6 @@
 #include <thread>
 #include <chrono>
 
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
 
 // ambition includes should be done like this, using <>
 #include <ambition/Initial3D.hpp>
@@ -18,11 +17,10 @@
 #include <ambition/SceneNode.hpp>
 #include <ambition/Concurrent.hpp>
 
+#include "Window.hpp"
 #include "loadOBJ.hpp"
 #include "loadBitmap.hpp"
 #include "loadShader.hpp"
-#include "WindowManager.hpp"
-#include "Window.hpp"
 #include "TriangleEntity.hpp"
 
 #include "Shader.hpp"
@@ -101,7 +99,22 @@ int main(void) {
 	//Window *window = wm()->addWindow(1024, 768, "Golden_Eagle");
 	//wm()->apply();
 
-	Window *window = createWindow().setWidth(1024).setHeight(768).setTitle("Golden Eagle").open();
+	Window *window = createWindow().size(1024, 768).title("Golden Eagle").visible(true);
+	window->makeContextCurrent();
+
+	Window *window2 = createWindow().share(window).title("LALALALALALALALALA");
+	thread some_thread([=] {
+		window2->makeContextCurrent();
+		window2->visible(true);
+
+		GLuint tex;
+		glGenTextures(1, &tex);
+		glBindTexture(GL_TEXTURE_2D, tex);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 1024, 1024, 0, GL_RGBA, GL_FLOAT, nullptr);
+		glDeleteTextures(1, &tex);
+
+		glfwMakeContextCurrent(nullptr);
+	});
 
 	window->onScroll.attach([](const mouse_scroll_event &e) {
 		cout << e.offset.h << endl;
@@ -112,19 +125,6 @@ int main(void) {
 		cout << e.codepoint << ": " << char(e.codepoint) << endl;
 		return false;
 	});
-
-	glewExperimental = true;
-	GLenum glew_err = glewInit();
-	log("GLEW") << "Initialisation returned " << glew_err;
-	if (glew_err != GLEW_OK) {
-		log("GLEW").error() << "Initialisation failed: " << glewGetErrorString(glew_err) << endl;
-		glfwTerminate();
-		cin.get();
-		std::exit(9001);
-	}
-	log("GLEW") << "Initialised";
-
-	log("System") << "GL version string: " << glGetString(GL_VERSION);
 
 	std::cin.get();
 
@@ -193,7 +193,7 @@ int main(void) {
 		if (now - lastFPSTime > 1) {
 			char fpsString[100];
 			sprintf(fpsString, "FPS: %d", fps);
-			window->setTitle(fpsString);
+			window->title(fpsString);
 			fps = 0;
 			lastFPSTime = glfwGetTime();
 		}
@@ -234,8 +234,8 @@ int main(void) {
 		mat4d MVP = Projection * View * Model;
 		// cout << "MVP: " << endl << MVP << endl;
 
-		int width = window->getWidth();
-		int height = window->getHeight();
+		int width = window->width();
+		int height = window->height();
 		glViewport(0, 0, width, height);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
