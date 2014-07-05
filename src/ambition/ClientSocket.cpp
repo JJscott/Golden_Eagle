@@ -18,7 +18,8 @@
 	#define FD_SET_F FD_SET
 
 #else
-	#include <winsock.h>
+	#include <winsock2.h>
+	#include <ws2tcpip.h>
 	#define FD_CLR_F(fd, set) u_int __i; \
 	for (__i = 0; __i < ((fd_set FAR *)(set))->fd_count; __i++) { \
 	if (((fd_set FAR *)(set))->fd_array[__i] == fd) { \
@@ -57,6 +58,11 @@ namespace ambition {
 	};
 
 	ClientSocket::ClientSocketImpl::ClientSocketImpl(ClientSocket *o) : outer(o) { 
+		#ifdef _WIN32
+			WSAData data;
+			WSAStartup(MAKEWORD(1, 1), &data);
+		#endif
+
 		client_socket = socket(AF_INET, SOCK_STREAM, 0);
 		if(client_socket == INVALID_SOCKET) {
 			network_error ne(error::NETERR_SOCKET_CREATE_FAILURE, "Unable to create socket");
@@ -64,15 +70,22 @@ namespace ambition {
 			ne.error_message = strerror(errno);
 			throw ne;
 		}
+
+		#ifdef _WIN32
+		u_long iMode=1;
+		ioctlsocket(client_socket,FIONBIO,&iMode);
+		#else
 		fcntl(client_socket, F_SETFL, O_NONBLOCK);
+		#endif
+
 		if(client_socket == INVALID_SOCKET) {
 			network_error ne(error::NETERR_SOCKET_SET_BLOCKING_FAILURE, "Unable to set socket blocking mode");
 			ne.error_no = errno;
 			ne.error_message = strerror(errno);
 			throw ne;
 		}
-		FD_ZERO(&fdset);
-		FD_SET(client_socket, &fdset);
+		FD_ZERO_F(&fdset);
+		FD_SET_F(client_socket, &fdset);
 	}
 
 	void ClientSocket::ClientSocketImpl::work_thread(ClientSocketImpl* target) {
