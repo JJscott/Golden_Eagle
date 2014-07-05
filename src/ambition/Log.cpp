@@ -176,6 +176,12 @@ namespace ambition {
 			ss << ts;
 			ss << " [" << std::setw(15) << source << "] ";
 			ss << std::setw(11) << typestr[type] << " : ";
+
+			if (msg.find_first_of("\r\n") != std::string::npos) {
+				// msg contains a CR or LF - start on a new line
+				ss << std::endl;
+			}
+
 			ss << msg;
 
 			// write to stderr and stdout
