@@ -114,30 +114,40 @@ namespace ambition {
 
 #else
 		// use unix escape codes
-		// TODO these should only do anything on cout and cerr
+		
+		namespace {
+
+			void setTextAttribute(std::ostream &o, const char *attrib) {
+				if (&o == &std::cout || &o == &std::cerr) {
+					// only allow escape codes going to stdout/stderr
+					o << attrib;
+				}
+			}
+
+		}
 
 		// Reset Color
-		std::ostream & reset(std::ostream &o) { o << "\033[0m"; return o; }
+		std::ostream & reset(std::ostream &o) { setTextAttribute(o, "\033[0m"); return o; }
 
 		// Regular Colors
-		std::ostream & black(std::ostream &o) { o << "\033[0;30m"; return o; }
-		std::ostream & red(std::ostream &o) { o << "\033[0;31m"; return o; }
-		std::ostream & green(std::ostream &o) { o << "\033[0;32m"; return o; }
-		std::ostream & yellow(std::ostream &o) { o << "\033[0;33m"; return o; }
-		std::ostream & blue(std::ostream &o) { o << "\033[0;34m"; return o; }
-		std::ostream & purple(std::ostream &o) { o << "\033[0;35m"; return o; }
-		std::ostream & cyan(std::ostream &o) { o << "\033[0;36m"; return o; }
-		std::ostream & white(std::ostream &o) { o << "\033[0;37m"; return o; }
+		std::ostream & black(std::ostream &o) { setTextAttribute(o, "\033[0;30m"); return o; }
+		std::ostream & red(std::ostream &o) { setTextAttribute(o, "\033[0;31m"); return o; }
+		std::ostream & green(std::ostream &o) { setTextAttribute(o, "\033[0;32m"); return o; }
+		std::ostream & yellow(std::ostream &o) { setTextAttribute(o, "\033[0;33m"); return o; }
+		std::ostream & blue(std::ostream &o) { setTextAttribute(o, "\033[0;34m"); return o; }
+		std::ostream & purple(std::ostream &o) { setTextAttribute(o, "\033[0;35m"); return o; }
+		std::ostream & cyan(std::ostream &o) { setTextAttribute(o, "\033[0;36m"); return o; }
+		std::ostream & white(std::ostream &o) { setTextAttribute(o, "\033[0;37m"); return o; }
 
 		// Bold Colors
-		std::ostream & boldBlack(std::ostream &o) { o << "\033[1;30m"; return o; }
-		std::ostream & boldRed(std::ostream &o) { o << "\033[1;31m"; return o; }
-		std::ostream & boldGreen(std::ostream &o) { o << "\033[1;32m"; return o; }
-		std::ostream & boldYellow(std::ostream &o) { o << "\033[1;33m"; return o; }
-		std::ostream & boldBlue(std::ostream &o) { o << "\033[1;34m"; return o; }
-		std::ostream & boldPurple(std::ostream &o) { o << "\033[1;35m"; return o; }
-		std::ostream & boldCyan(std::ostream &o) { o << "\033[1;36m"; return o; }
-		std::ostream & boldWhite(std::ostream &o) { o << "\033[1;37m"; return o; }
+		std::ostream & boldBlack(std::ostream &o) { setTextAttribute(o, "\033[1;30m"); return o; }
+		std::ostream & boldRed(std::ostream &o) { setTextAttribute(o, "\033[1;31m"); return o; }
+		std::ostream & boldGreen(std::ostream &o) { setTextAttribute(o, "\033[1;32m"); return o; }
+		std::ostream & boldYellow(std::ostream &o) { setTextAttribute(o, "\033[1;33m"); return o; }
+		std::ostream & boldBlue(std::ostream &o) { setTextAttribute(o, "\033[1;34m"); return o; }
+		std::ostream & boldPurple(std::ostream &o) { setTextAttribute(o, "\033[1;35m"); return o; }
+		std::ostream & boldCyan(std::ostream &o) { setTextAttribute(o, "\033[1;36m"); return o; }
+		std::ostream & boldWhite(std::ostream &o) { setTextAttribute(o, "\033[1;37m"); return o; }
 #endif
 
 	}
@@ -167,7 +177,6 @@ namespace ambition {
 			ss << " [" << std::setw(15) << source << "] ";
 			ss << std::setw(11) << typestr[type] << " : ";
 			ss << msg;
-			ss << '\n';
 
 			// write to stderr and stdout
 			m_cerr->write(verbosity, type, ss.str());

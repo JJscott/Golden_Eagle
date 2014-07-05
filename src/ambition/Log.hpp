@@ -51,6 +51,7 @@ namespace ambition {
 		bool m_mute = false;
 
 	protected:
+		// this is responsible for newlines
 		virtual void write_impl(unsigned verbosity, unsigned type, const std::string &str) = 0;
 
 	public:
@@ -127,7 +128,7 @@ namespace ambition {
 
 	protected:
 		virtual void write_impl(unsigned, unsigned, const std::string &str) override {
-			(*m_out) << str;
+			(*m_out) << str << std::endl;
 		}
 
 		inline std::ostream & getStream() {
@@ -165,7 +166,7 @@ namespace ambition {
 			}
 			out << str;
 			out << termcolor::reset;
-			out.flush();
+			out << endl;
 		}
 
 	public:
