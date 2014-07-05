@@ -10,6 +10,7 @@
 #include <cassert>
 #include <string>
 
+#include "Error.hpp"
 #include "Initial3D.hpp"
 
 // TODO not be ugly - use vec3 and nan_error
