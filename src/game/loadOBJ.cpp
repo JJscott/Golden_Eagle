@@ -26,9 +26,9 @@ bool loadOBJ(const char * path, vector<vec3d > &out_vertices, vector<vec3d > &ou
 			
 
 			fscanf(file, "%f %f %f\n", &x, &y, &z);
-			printf("Scanned: %f %f %f\n", x, y, z);
+			//printf("Scanned: %f %f %f\n", x, y, z);
 			vec3d vx(x, y, z);
-			printf("vxScan: %f %f %f\n", vx.x(), vx.y(), vx.z());
+			//printf("vxScan: %f %f %f\n", vx.x(), vx.y(), vx.z());
 			temp_vertices.push_back(vx);
 		} else if(strcmp(lineHeader, "vt") == 0) {
 			

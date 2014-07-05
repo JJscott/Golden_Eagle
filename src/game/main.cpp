@@ -28,14 +28,6 @@
 using namespace std;
 using namespace ambition;
 
-// static void error_callback(int, const char* description) {
-//     log("GLFW") % Log::error << description;
-// }
-// static void key_callback(GLFWwindow* window, int key, int, int action, int) {
-//     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-//         glfwSetWindowShouldClose(window, GL_TRUE);
-// }
-
 int main(void) {
 	log("System") % 0 << "Starting...";
 
@@ -49,55 +41,9 @@ int main(void) {
 
 	log() << std::endl;
 
-	Event<int> event;
-
-	cin.get();
-
-	thread t([&]() mutable {
-
-		try {
-			event.wait();
-		} catch (interruption &e) {
-			cout << "INTERRUPTED" << endl;
-		}
-
-	});
-
-	InterruptManager::interrupt(t.get_id());
-
-	t.join();
-
-
-	// int foo = 9001;
-
-	// // use some kind of reference type if you need to modify the event arg
-	// Event<int *> e;
-	
-	// unsigned k = e.attach([](int *arg) { log("Event") << *arg; });
-
-	// thread t([&]() {
-	// 	log("Thread") << "Begin...";
-	// 	this_thread::sleep_for(chrono::milliseconds(3000));
-	// 	e.notify(&foo);
-	// });
-
-	// // wait in a manner that suppresses unwanted wakeup
-	// while (!e.wait()) {
-	// 	cout << "spurious" << endl;
-	// }
-
-	// e.detach(k);
-	// e.notify(&foo);
-
 	ShaderManager *shaderman = new ShaderManager("./res/shader");
 
 	TriangleEntity myEntity;
-
-	//rootScene.addChildNode(&myEntity);
-
-	//wm()->init();
-	//Window *window = wm()->addWindow(1024, 768, "Golden_Eagle");
-	//wm()->apply();
 
 	Window *window = createWindow().size(1024, 768).title("Golden Eagle").visible(true);
 	window->makeContextCurrent();
@@ -172,10 +118,10 @@ int main(void) {
 	mat4d View = createLookAt(pos, look, up);
 	mat4d Model = mat4d(3.0f);
 
-	cout << "Pos: " << pos << endl << "Look: " << look << endl << "Up: " << up << endl;
-	cout << "Projection: " << endl << Projection << endl;
-	cout << "View: " << endl << View << endl;
-	cout << "Model: " << endl << Projection << endl;
+	//cout << "Pos: " << pos << endl << "Look: " << look << endl << "Up: " << up << endl;
+	//cout << "Projection: " << endl << Projection << endl;
+	//cout << "View: " << endl << View << endl;
+	//cout << "Model: " << endl << Projection << endl;
 
 	double longitude = 0;
 	double elevation = 20;
@@ -277,6 +223,7 @@ int main(void) {
 	delete window;
 	glfwTerminate();
 
+	log("System") % 0 << "Exiting normally";
 	AsyncExecutor::stop();
 
 	std::exit(EXIT_SUCCESS);

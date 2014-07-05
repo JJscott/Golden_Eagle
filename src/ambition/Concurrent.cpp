@@ -6,17 +6,17 @@ using namespace std;
 
 namespace ambition {
 
-	std::mutex InterruptManager::m_mutex;
-	std::map<std::thread::id, InterruptManager::thread_data_t> InterruptManager::m_thread_data;
+	mutex InterruptManager::m_mutex;
+	map<thread::id, InterruptManager::thread_data_t> InterruptManager::m_thread_data;
 
 	// wait on a condition variable
-	void InterruptManager::wait(std::condition_variable &cond, std::unique_lock<std::mutex> &lock) {
+	void InterruptManager::wait(condition_variable &cond, unique_lock<mutex> &lock) {
 		// caller should have locked mutex
 		assert(lock.owns_lock());
-		auto id = std::this_thread::get_id();
+		auto id = this_thread::get_id();
 		// setup interruption mechanism
 		{
-			std::lock_guard<std::mutex> lock1(m_mutex);
+			lock_guard<mutex> lock1(m_mutex);
 			auto it = m_thread_data.find(id);
 			if (it != m_thread_data.end()) {
 				// thread data already present
@@ -41,7 +41,7 @@ namespace ambition {
 		cond.wait(lock);
 		// check for interrupt and teardown
 		{
-			std::lock_guard<std::mutex> lock1(m_mutex);
+			lock_guard<mutex> lock1(m_mutex);
 			auto it = m_thread_data.find(id);
 			// no other thread should have removed the thread data
 			assert(it != m_thread_data.end());
@@ -60,35 +60,25 @@ namespace ambition {
 	void InterruptManager::interrupt(const std::thread::id &id) {
 		thread_data_t td;
 		{
-			// lock this mutex seperately first, because we need to
-			// lock the cond's mutex first when we lock both to match with wait()
-			std::lock_guard<std::mutex> lock(m_mutex);
+			// first determine what condition var to notify, if any
+			lock_guard<mutex> lock(m_mutex);
 			auto it = m_thread_data.find(id);
 			if (it == m_thread_data.end()) {
-				// thread not waiting, schedule interrupt
+				// thread not waiting, schedule interrupt and return
 				td.condition = nullptr;
 				td.mutex = nullptr;
 				td.interrupt = true;
 				m_thread_data[id] = td;
 				return;
 			}
-			// we found the cond/mutex of the thread to be interrupted
+			// we found the cond/mutex of the thread to be interrupted, set interrupt status
+			it->second.interrupt = true;
 			td = it->second;
 		}
 		{
-			// lock in the same order as wait()
 			// locking the mutex used for the condition wait ensures the thread
 			// is _actually_ waiting before we wake it
-			std::lock_guard<std::mutex> lock(*td.mutex);
-			std::lock_guard<std::mutex> lock1(m_mutex);
-			// check we're still ok after re-locking
-			auto it = m_thread_data.find(id);
-			if (it == m_thread_data.end()) {
-				// another thread did the interrupt?
-				return;
-			}
-			// signal interruption
-			it->second.interrupt = true;
+			lock_guard<mutex> lock(*td.mutex);
 		}
 		// wake the interrupted thread - this may (will) cause spurious wakeup of other threads
 		td.condition->notify_all();
@@ -117,6 +107,8 @@ namespace ambition {
 						task();
 					} catch (std::exception e) {
 						log("AsyncExec").error() << "Uncaught exception; what(): " << e.what();
+					} catch (...) {
+						log("AsyncExec").error() << "Uncaught exception (not derived from std::exception)";
 					}
 				}
 			});
@@ -127,8 +119,9 @@ namespace ambition {
 	// stop the background thread. must be called before exit() to die nicely.
 	void AsyncExecutor::stop() {
 		if (m_started) {
-			// you don't see this message most of the time because log uses AsyncExecutor
-			log("AsyncExec") % 0 << "Stopping...";
+			log("AsyncExec") % 0 << "Stopping background thread...";
+			// give the last log message time to show up
+			this_thread::sleep_for(chrono::milliseconds(10));
 			InterruptManager::interrupt(m_thread.get_id());
 			// because of this
 			// https://connect.microsoft.com/VisualStudio/feedback/details/747145/std-thread-join-hangs-if-called-after-main-exits-when-using-vs2012-rc

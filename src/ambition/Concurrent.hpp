@@ -2,7 +2,7 @@
 #define AMBITION_CONCURRENT_HPP
 
 #include <cassert>
-#include <exception>
+#include <stdexcept>
 #include <map>
 #include <vector>
 #include <deque>
@@ -11,6 +11,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <atomic>
+#include <chrono>
 
 #include "Ambition.hpp"
 #include "Log.hpp"
@@ -189,6 +190,8 @@ namespace ambition {
 		static void start();
 
 		// stop the background thread. must be called before exit() to die nicely.
+		// cannot be registered with atexit() due to MSVC stdlib bug
+		// https://connect.microsoft.com/VisualStudio/feedback/details/747145/std-thread-join-hangs-if-called-after-main-exits-when-using-vs2012-rc
 		static void stop();
 
 		// add a background task
