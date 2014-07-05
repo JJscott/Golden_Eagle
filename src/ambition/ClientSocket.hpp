@@ -3,6 +3,11 @@
 
 #include "ambition/Event.hpp"
 
+// KNOWN ISSUES:
+// Thread may try to grab FDSET whilst it's being set by calling thread, needs mutex
+// Needs send, recieve, close
+// Dtor should call close()
+
 namespace ambition {
 	struct SocketResult {
 		bool success;
