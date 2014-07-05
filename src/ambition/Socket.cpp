@@ -3,7 +3,11 @@
 
 #include <cstdio>
 
-	namespace ambition {
+#ifdef _WIN32
+#include <winsock.h>
+#endif
+
+namespace ambition {
 
 	#ifndef _WIN32
 		typedef int SOCKET;
@@ -35,7 +39,7 @@
 		#define FD_SET_F(fd, set) if (((fd_set FAR *)(set))->fd_count < FD_SETSIZE) \
 			((fd_set FAR *)(set))->fd_array[((fd_set FAR *)(set))->fd_count++] = (fd);
 
-		#include <winsock.h>
+		
 		typedef int socklen_t;
 	#endif
 
@@ -66,6 +70,7 @@
 
 	ListenSocket::ListenSocket() {
 		lsock = new ListenSocketImpl;
+		init();
 	}
 
 	ListenSocket::~ListenSocket() {

@@ -22,4 +22,8 @@ namespace ambition {
 	uint16_t Server::listen_port() {
 		return lsocket->listen_port();
 	}
+
+	int Server::get_version() {
+		
+	}
 }
