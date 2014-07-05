@@ -49,7 +49,7 @@ namespace ambition {
 		static void interrupt(const std::thread::id &id);
 
 		// interrupt all threads waiting on a condition variable
-		static void interrupt(const std::condition_variable &cond);
+		static void interrupt(std::condition_variable &cond);
 
 	};
 

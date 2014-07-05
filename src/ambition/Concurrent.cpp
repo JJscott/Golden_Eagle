@@ -87,7 +87,7 @@ namespace ambition {
 	}
 
 	// interrupt all threads waiting on a condition variable
-	void InterruptManager::interrupt(const std::condition_variable &cond) {
+	void InterruptManager::interrupt(std::condition_variable &cond) {
 		vector<thread_data_t> tdv;
 		{
 			// find waiting threads
