@@ -1,51 +1,23 @@
 #ifndef PACKET_HPP
 #define PACKET_HPP
 
-#include <deque>
+#include "ambition/DataPacket.hpp"
+#include "ambition/Server.hpp"
 
-class Packet {
-	std::deque<char> bytestream;
-public:
-	int size() { return bytestream.size(); }
-	void add(char b) {
-		bytestream.push_back(b);
+namespace ambition {
+	class Session {
+	public:
+	};
+
+	namespace packets {
+		class Packet {
+			uint16_t p_id;
+		public:
+			Packet(uint16_t n_p_id) : p_id(n_p_id) {}
+			virtual inline uint16_t get_id() { return p_id; }
+			virtual inline void execute_handler(Session* st, DataPacket* dp) =0;
+		};
 	}
+}
 
-	char peek_byte() {
-		return bytestream.front();
-	}
-
-	char get_byte() {
-		char t = bytestream.front();
-		bytestream.pop_front();
-		return t;
-	}
-
-	void add(char* bts, size_t n) {
-		for(size_t i = 0; i < n; i++) {
-			bytestream.push_back(bts[i]);
-		}
-	}
-
-	char* peek_bytes(size_t n) {
-		if(n > bytestream.size()) return NULL;
-		char* ret = new char[n];
-		int i = 0;
-		for(auto it : bytestream) {
-			ret[i++] = it;
-		}
-		return ret;
-	}
-
-	char* get_bytes(size_t n) {
-		if(n > bytestream.size()) return NULL;
-		char* ret = new char[n];
-		for(size_t i = 0; i < n; i++) {
-			ret[i] = bytestream.front();
-			bytestream.pop_front();
-		}
-		return ret;
-	}
-};
-
-#endif 
+#endif

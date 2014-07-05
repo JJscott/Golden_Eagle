@@ -4,27 +4,25 @@
 #include <map>
 
 #include "ambition/Ambition.hpp"
-#include "ambition/Socket.hpp"
+#include "ambition/ListenSocket.hpp"
 #include "ambition/Log.hpp"
 #include "ambition/Packet.hpp"
 #include "ambition/packets/HelloPacket.hpp"
 
 namespace ambition {
-	using packet_id_type = uint16_t;
-	using packet_id_map = std::map<packet_id_type,  Packet* (*)(Packet*)>
-
-	class MessageFactory { 
-		packet_id_map pm;
-
+	class MessageFactory {
+		std::map<uint16_t, ambition::packets::Packet*> pid_map;
 	public:
-		MessageFactory() {
-			pm[HelloPacket::ID] = HelloPacket::dewirePacket;
+		void add_handler(ambition::packets::Packet* p) {
+			// TODO: Check if p->get_id() in pid_map.keys
+			pid_map[p->get_id()] = p;
 		}
 	};
 
 	class Server {
 		bool isPublic = false;
 		ListenSocket* lsocket;
+		MessageFactory mfactory;
 	public:
 		Server();
 		Server(bool);

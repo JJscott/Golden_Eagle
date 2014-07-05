@@ -4,8 +4,8 @@
 
 #include "ambition/Log.hpp"
 #include "ambition/Config.hpp"
-#include "ambition/Socket.hpp"
 #include "ambition/Server.hpp"
+#include "ambition/ClientSocket.hpp"
 #include "ambition/Event.hpp"
 #include "ambition/Scene.hpp"
 #include "ambition/TreeEntity.hpp"
@@ -32,7 +32,27 @@ using namespace ambition;
 //	}
 //};
 
+bool connected(SocketResult se) {
+	std::cout << "connection complete: status: " << (se.success ? "true" : "false") << std::endl;
+	return false;
+}
+
+void bad() {
+	ClientSocket cs;
+	cs.on_connected.attach(connected);
+	cs.begin_connect("localhost", 8118, 1000000);
+	cs.on_connected.wait();
+	return;
+}
+
 int main() {
+	bad();
+	return 0;
+	
+	ListenSocket socket;
+	socket.init();
+
+
 	// Config conf("server.conf");
 	Scene *scene = new Scene;
 	scene->addEntity(new TreeEntity);
@@ -50,8 +70,7 @@ int main() {
 
 
 	try {
-	ListenSocket socket;
-	socket.init();
+	
 	} catch(const char* m) {
 		printf("%s\n", m);
 	}

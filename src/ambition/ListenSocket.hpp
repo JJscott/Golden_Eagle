@@ -1,5 +1,5 @@
-#ifndef SOCKET_HPP
-#define SOCKET_HPP
+#ifndef LISTENSOCKET_HPP
+#define LISTENSOCKET_HPP
 
 #include <cstdio>
 #include <cstdint>
