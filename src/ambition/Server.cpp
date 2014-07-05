@@ -27,6 +27,6 @@ namespace ambition {
 	}
 
 	int Server::get_version() {
-		
+		return 0;		
 	}
 }

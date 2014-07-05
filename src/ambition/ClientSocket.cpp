@@ -65,7 +65,7 @@ namespace ambition {
 
 		client_socket = socket(AF_INET, SOCK_STREAM, 0);
 		if(client_socket == INVALID_SOCKET) {
-			network_error ne(error::NETERR_SOCKET_CREATE_FAILURE, "Unable to create socket");
+			network_error ne(error::neterr_socket_create_failure, "Unable to create socket");
 			ne.error_no = errno;
 			ne.error_message = strerror(errno);
 			throw ne;
@@ -79,7 +79,7 @@ namespace ambition {
 		#endif
 
 		if(client_socket == INVALID_SOCKET) {
-			network_error ne(error::NETERR_SOCKET_SET_BLOCKING_FAILURE, "Unable to set socket blocking mode");
+			network_error ne(error::neterr_socket_set_blocking_failure, "Unable to set socket blocking mode");
 			ne.error_no = errno;
 			ne.error_message = strerror(errno);
 			throw ne;
@@ -93,13 +93,13 @@ namespace ambition {
 		while(true) {
 			rv = select(target->client_socket+1,  NULL, &target->fdset, NULL, NULL);
 			if(rv == INVALID_SOCKET) {
-				network_error ne(error::NETERR_SELECT_FAILURE, "General select() error");
+				network_error ne(error::neterr_select_failure, "General select() error");
 				ne.error_no = errno;
 				ne.error_message = strerror(errno);
 				throw ne;
 			}
 			if (rv >= 1) {
-				int so_error;
+				char so_error;
 				socklen_t slen = sizeof(so_error);
 				getsockopt(target->client_socket, SOL_SOCKET, SO_ERROR, &so_error, &slen);
 
@@ -135,7 +135,7 @@ namespace ambition {
 
 		rv = getaddrinfo(hostname.c_str(), pt_str, &hints, &rp);
 		if(rv != 0) {
-				network_error ne(error::NETERR_RESOLVE_FAILURE, "Failed to get address for hostname");
+				network_error ne(error::neterr_resolve_failure, "Failed to get address for hostname");
 				ne.error_no = errno;
 				ne.error_message = strerror(errno);
 				throw ne;
@@ -143,7 +143,7 @@ namespace ambition {
 
 		rv = connect(client_socket, rp->ai_addr, rp->ai_addrlen);
 		if(rv != INVALID_SOCKET) {
-				network_error ne(error::NETERR_CONNECT_FAILURE, "Unable to begin connect request");
+				network_error ne(error::neterr_connect_failure, "Unable to begin connect request");
 				ne.error_no = errno;
 				ne.error_message = strerror(errno);
 				throw ne;

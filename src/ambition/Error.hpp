@@ -3,11 +3,11 @@ namespace ambition {
 
 	namespace error {
 		enum network_errors {
-			NETERR_SOCKET_CREATE_FAILURE = 0,
-			NETERR_SOCKET_SET_BLOCKING_FAILURE,
-			NETERR_SELECT_FAILURE,
-			NETERR_CONNECT_FAILURE,
-			NETERR_RESOLVE_FAILURE
+			neterr_socket_create_failure,
+			neterr_socket_set_blocking_failure,
+			neterr_select_failure,
+			neterr_connect_failure,
+			neterr_resolve_failure
 		};
 	}
 	class network_error : public std::runtime_error {
