@@ -1,15 +1,43 @@
 /*
- * Initial3D Shader Helper (GL2)
+ * Albireo Shader Manager
+ *
+ * Extra preprocessor directives:
+ *		#include "..."		: include file relative to directory containing current file
+ *		#include <...>		: include file relative to directories known to the shader manager
+ *								#include resolves #version directives
+ *
+ *		#shader shader-type	: specify shader type(s) a file should be compiled as
+ *								valid values for shader-type are:
+ *								- vertex
+ *								- fragment
+ *								- geometry
+ *								- tess_control
+ *								- tess_evaluation
+ *
+ * The line numbers reported in compiler messages should be correct provided the compiler
+ * follows the GLSL spec for the version in question regarding the #line directive.
+ * The spec changed regarding this with GLSL 330 (to the best of my knowledge).
+ * If the compiler uses the pre-330 behaviour for 330 or later code, line numbers will
+ * be reported as 1 greater than they should be.
  *
  * @author Ben Allen
  *
- * TODO - suppose I link multiple frag shaders together, how do i tell them apart in program info log?
- * TODO - better unload functions
+ * TODO supply GLSL preprocessor definitions somehow
+ * TODO suppose I link multiple frag shaders together, how do i tell them apart in program info log?
+ * TODO better unload functions?
+ * TODO #include, #shader and #version are processed regardless of #if etc
  *
  */
 
-#ifndef INITIAL3D_SHADER_H
-#define INITIAL3D_SHADER_H
+//
+// If (eg with an AMD GPU) shader compilation fails regarding #line
+// #define AMBITION_SHADER_NO_LINE_DIRECTIVES
+// before including this file to prevent #line directives.
+// This will mean line numbers will not be correct.
+//
+
+#ifndef AMBITION_SHADER_HPP
+#define AMBITION_SHADER_HPP
 
 #include <cstdlib>
 #include <cstdio>
@@ -22,12 +50,18 @@
 #include <stdexcept>
 
 #include "Window.hpp"
+#include <ambition/Log.hpp>
 
-namespace initial3d {
+namespace ambition {
 
 	class shader_error : public std::runtime_error {
 	public:
 		explicit inline shader_error(const std::string &what_ = "Generic shader error.") : std::runtime_error(what_) { }
+	};
+
+	class shader_type_error : public shader_error {
+	public:
+		explicit inline shader_type_error(const std::string &what_ = "Bad shader type.") : shader_error(what_) { }
 	};
 
 	class shader_compile_error : public shader_error {
@@ -47,7 +81,7 @@ namespace initial3d {
 		if (infologLength > 1) {
 			char *infoLog = new char[infologLength];
 			glGetShaderInfoLog(obj, infologLength, &charsWritten, infoLog);
-			std::cout << infoLog << std::endl;
+			log("ShaderMan") << infoLog;
 			delete[] infoLog;
 		}
 	}
@@ -59,7 +93,7 @@ namespace initial3d {
 		if (infologLength > 1) {
 			char *infoLog = new char[infologLength];
 			glGetProgramInfoLog(obj, infologLength, &charsWritten, infoLog);
-			std::cout << infoLog << std::endl;
+			log("ShaderMan") << infoLog;
 			delete[] infoLog;
 		}
 	}
@@ -67,7 +101,7 @@ namespace initial3d {
 	inline GLuint compileShader(GLenum type, const std::string &text) {
 		GLuint shader = glCreateShader(type);
 		const char *text_c = text.c_str();
-		glShaderSource(shader, 1, &text_c, NULL);
+		glShaderSource(shader, 1, &text_c, nullptr);
 		glCompileShader(shader);
 		// always print, so we can see warnings
 		printShaderInfoLog(shader);
@@ -95,9 +129,9 @@ namespace initial3d {
 			std::string msg = "Error opening shader source '";
 			msg += path;
 			msg += "'.";
-			throw shader_compile_error(msg);
+			throw shader_error(msg);
 		}
-		std::cout << "Compiling '" << path << "'..." << std::endl;
+		log("ShaderMan") << "Compiling '" << path << "'...";
 		return compileShader(type, ifs);
 	}
 
@@ -111,6 +145,27 @@ namespace initial3d {
 			throw shader_link_error();
 		}
 	}
+
+	struct shader_version {
+		unsigned id;
+		std::string profile;
+		
+		inline explicit shader_version(unsigned id_, std::string profile_ = "") : id(id_), profile(profile_) { }
+		
+		inline bool operator==(const shader_version &rhs) const {
+			return id == rhs.id && profile == rhs.profile;
+		}
+		
+		inline bool operator!=(const shader_version &rhs) const {
+			return !(*this == rhs);
+		}
+		
+		inline friend std::ostream & operator<<(std::ostream &out, const shader_version &ver) {
+			out << ver.id;
+			if (!ver.profile.empty()) out << " " << ver.profile;
+			return out;
+		}
+	};
 
 	class ShaderManager {
 	private:
@@ -135,7 +190,6 @@ namespace initial3d {
 		std::vector<shader_t> m_shaders;
 		std::vector<program_t> m_programs;
 
-	public:
 		inline static void disassembleProgramName(const std::string &name, std::vector<std::string> &out) {
 			size_t i = 0;
 			while (i != std::string::npos) {
@@ -146,26 +200,67 @@ namespace initial3d {
 			}
 		}
 
+		inline static std::string strip(const std::string &str) {
+			size_t offset = str.find_first_not_of(" \t\r\n");
+			if (offset == std::string::npos) return "";
+			size_t count = str.find_last_not_of(" \t\r\n") + 1 - offset;
+			return str.substr(offset, count);
+		}
+
+		inline static std::string shaderTypeString(GLenum type) {
+			switch (type) {
+			case GL_VERTEX_SHADER:
+				return "GL_VERTEX_SHADER";
+			case GL_FRAGMENT_SHADER:
+				return "GL_FRAGMENT_SHADER";
+			case GL_GEOMETRY_SHADER:
+				return "GL_GEOMETRY_SHADER";
+			case GL_TESS_CONTROL_SHADER:
+				return "GL_TESS_CONTROL_SHADER";
+			case GL_TESS_EVALUATION_SHADER:
+				return "GL_TESS_EVALUATION_SHADER";
+			default:
+				return "UNKNOWN";
+			}
+		}
+		
+		// make a line directive string, using pre-330 behaviour
+		inline static std::string lineDirective(const shader_version &ver, unsigned line, unsigned source) {
+			// to set next line to 1
+			// by glsl-spec-1.30.8: #line 0
+			// by glsl-spec-4.20.8: #line 1
+			// changeover seems to be at version 330
+			std::ostringstream oss;
+#ifndef AMBITION_SHADER_NO_LINE_DIRECTIVES
+			if (ver.id < 330) {
+				oss << "#line " << line << " " << source;
+			} else {
+				oss << "#line " << (line + 1) << " " << source;
+			}
+#endif
+			return oss.str();
+		}
+
+	public:
 		// resolve duplicates, strip whitespace, ordering etc. does not account for auto-linking.
 		inline static std::string canonicalProgramName(const std::string &name) {
-			// remove duplicates and blanks, sort
+			// remove duplicates and blanks
 			std::vector<std::string> names, names2;
 			disassembleProgramName(name, names);
-			for (std::vector<std::string>::const_iterator it = names.begin(); it != names.end(); it++) {
-				if (it->find_first_not_of(' ') != std::string::npos) {
-					// has non-whitespace (and isnt empty)
-					if (std::find(names2.begin(), names2.end(), *it) == names2.end()) {
+			for (auto it = names.cbegin(); it != names.cend(); it++) {
+				std::string name_stripped = strip(*it);
+				if (!name_stripped.empty()) {
+					// has non-whitespace
+					if (std::find(names2.cbegin(), names2.cend(), name_stripped) == names2.cend()) {
 						// not a dup
-						int offset = it->find_first_not_of(" \t\r\n");
-						int count = it->find_last_not_of(" \t\r\n") + 1 - offset;
-						names2.push_back(it->substr(offset, count));
+						names2.push_back(name_stripped);
 					}
 				}
 			}
 			// need to sort to avoid permutations
 			std::sort(names2.begin(), names2.end());
 			std::string cname;
-			for (std::vector<std::string>::const_iterator it = names2.begin(); it != names2.end(); it++) {
+			for (auto it = names2.cbegin(); it != names2.cend(); it++) {
 				(cname += *it) += ';';
 			}
 			if (cname.length() > 0) cname = cname.substr(0, cname.length() - 1);
@@ -182,13 +277,14 @@ namespace initial3d {
 			}
 		}
 
+		// dont use this
 		inline void autoLinkShader(const std::string &name) {
-			m_auto_link.push_back(name);
+			m_auto_link.push_back(strip(name));
 		}
 
 		std::string resolveSourcePath(const std::string &name) {
-			// nope, find file
-			for (std::vector<std::string>::const_iterator it = m_shader_dirs.begin(); it != m_shader_dirs.end(); it++) {
+			// find file
+			for (auto it = m_shader_dirs.cbegin(); it != m_shader_dirs.cend(); it++) {
 				std::string path = *it + name;
 				std::ifstream ifs(path.c_str());
 				if (ifs.good()) {
@@ -201,16 +297,23 @@ namespace initial3d {
 			std::string msg = "Unable to find shader file '";
 			msg += name;
 			msg += "'.";
-			throw shader_compile_error(msg);
+			throw shader_error(msg);
 		}
 
-		// process #include directives, and strip #version directives
+		// process #include and #shader directives, and strip #version directives
 		// returns the version number from this file
 		// "" style includes are handled relative to the directory containing the shader being compiled
 		// <> style includes are handled relative to source directories known to the ShaderManager
-		inline int preprocessShader(const std::string &path, std::ostream &text_os, std::vector<std::string> &source_names) {
+		inline shader_version preprocessShader(
+			const std::string &path,
+			std::ostream &text_os,
+			std::vector<std::string> &source_names,
+			std::vector<GLenum> &shader_types,
+			std::ostream &log_os
+		) {
 			char cbuf[1024];
-			int version = 110;
+			shader_version ver = shader_version(110);
+			bool have_ver = false;
 			int source_id = source_names.size();
 			source_names.push_back(path);
 			int line_number = 1;
@@ -222,7 +325,7 @@ namespace initial3d {
 				msg += "Error opening file '";
 				msg += path;
 				msg += "'.";
-				throw shader_compile_error(msg);
+				throw shader_error(msg);
 			}
 
 			// get cwd
@@ -235,93 +338,147 @@ namespace initial3d {
 				cwd = "./";
 			}
 
-			// init line numbers
-			text_os << "#line 0 " << source_id << '\n';
+			// don't init line numbers till we have a #version
 
 			while (ifs.good()) {
 				// TODO like this, borked #includes will be passed to the compiler
 				std::string line;
 				std::getline(ifs, line);
 				int v;
-				if (sscanf(line.c_str(), " #version %d", &v) > 0 && version == 110) {
-					// deal with #version
+
+				if (std::sscanf(line.c_str(), " #version %d %s", &v, cbuf) == 1 && !have_ver) {
+					// deal with #version version-id
 					// this strips all #version directives, and only remembers the first
-					version = v;
-					text_os << '\n';
-				} else if (sscanf(line.c_str(), " #include \"%[^\"]\"", cbuf) > 0) {
+					ver.id = v;
+					ver.profile = "";
+					have_ver = true;
+					// init line numbers
+					text_os << lineDirective(ver, line_number, source_id) << '\n';
+
+				} else if (std::sscanf(line.c_str(), " #version %d %s", &v, cbuf) == 2 && !have_ver) {
+					// deal with #version version-id profile-name
+					// this strips all #version directives, and only remembers the first
+					ver.id = v;
+					ver.profile = cbuf;
+					have_ver = true;
+					// init line numbers
+					text_os << lineDirective(ver, line_number, source_id) << '\n';
+
+				} else if (std::sscanf(line.c_str(), " #include \"%[^\"]\"", cbuf) > 0) {
 					// deal with #include "..."
-					// TODO ? the negated charset is C99
-					std::string path_inc = cwd + cbuf;
-					int ver_inc = preprocessShader(path_inc, text_os, source_names);
-					if (version != ver_inc) {
-						std::cerr << "WARNING: #version of '" << path_inc << "' (" << ver_inc
-							<< ") != #version of includer '" << path << "' (" << version << ")" << std::endl; 
+					// the negated charset is C99
+					std::string path_inc = cwd + strip(cbuf);
+					shader_version ver_inc = preprocessShader(path_inc, text_os, source_names, shader_types, log_os);
+					if (ver != ver_inc) {
+						log_os << "WARNING: \n'" << path_inc << "' (version " << ver_inc
+							<< ") included by\n'" << path << "' (version " << ver << ")" << std::endl;
 					}
-					text_os << "#line " << line_number << " " << source_id << '\n';
-				} else if (sscanf(line.c_str(), " #include <%[^>]>", cbuf) > 0) {
+					text_os << lineDirective(ver, line_number, source_id) << '\n';
+
+				} else if (std::sscanf(line.c_str(), " #include <%[^>]>", cbuf) > 0) {
 					// deal with #include <...>
-					// TODO ? the negated charset is C99
+					// the negated charset is C99
 					std::string path_inc = resolveSourcePath(cbuf);
-					int ver_inc = preprocessShader(path_inc, text_os, source_names);
-					if (version != ver_inc) {
-						std::cerr << "WARNING: #version of '" << path_inc << "' (" << ver_inc
-							<< ") != #version of includer '" << path << "' (" << version << ")" << std::endl; 
+					shader_version ver_inc = preprocessShader(path_inc, text_os, source_names, shader_types, log_os);
+					if (ver != ver_inc) {
+						log_os << "WARNING: \n'" << path_inc << "' (version " << ver_inc
+							<< ") included by\n'" << path << "' (version " << ver << ")" << std::endl;
 					}
-					text_os << "#line " << line_number << " " << source_id << '\n';
+					text_os << lineDirective(ver, line_number, source_id) << '\n';
+
+				} else if (std::sscanf(line.c_str(), " #shader %s", cbuf) > 0) {
+					// deal with #shader - specifies shader type to compile as
+					// TODO this silently ignores bad #shader directives
+					std::string type_str = cbuf;
+					if (type_str == "vertex") shader_types.push_back(GL_VERTEX_SHADER);
+					if (type_str == "fragment") shader_types.push_back(GL_FRAGMENT_SHADER);
+					if (type_str == "geometry") shader_types.push_back(GL_GEOMETRY_SHADER);
+					if (type_str == "tess_control") shader_types.push_back(GL_TESS_CONTROL_SHADER);
+					if (type_str == "tess_evaluation") shader_types.push_back(GL_TESS_EVALUATION_SHADER);
+					text_os << '\n';
+					
 				} else {
 					// ... its a normal glsl line
 					text_os << line << '\n';
 				}
+
 				line_number++;
 			}
-			return version;
+			return ver;
 		}
 
-		inline GLuint getShader(GLenum type, const std::string &name) {
+		inline GLuint getShader(GLenum type, const std::string &name, bool force_type = false) {
+			std::string name_stripped = strip(name);
+
 			// is it already compiled?
-			for (std::vector<shader_t>::const_iterator it = m_shaders.begin(); it != m_shaders.end(); it++) {
-				if (it->type == type && it->name == name) {
+			for (auto it = m_shaders.cbegin(); it != m_shaders.cend(); it++) {
+				if (it->type == type && it->name == name_stripped) {
 					// yes, return id
 					return it->id;
 				}
 			}
+
 			// resolve path
-			std::string path = resolveSourcePath(name);
-			std::cout << "Compiling '" << path << "'..." << std::endl;
+			std::string path = resolveSourcePath(name_stripped);
+
 			// preprocess
 			std::ostringstream text_os_main;
 			std::vector<std::string> source_names;
-			int version = preprocessShader(path, text_os_main, source_names);
-			// prepend version and define type
-			std::ostringstream text_os_head;
-			text_os_head << "#version " << version << '\n';
+			std::vector<GLenum> shader_types;
+			std::ostringstream log_os;
+			shader_version version = preprocessShader(path, text_os_main, source_names, shader_types, log_os);
+			
+			if (!force_type && std::find(shader_types.cbegin(), shader_types.cend(), type) == shader_types.cend()) {
+				// type being compiled was not declared (and the type isnt being forced)
+				throw shader_type_error("Shader type being compiled was not declared.");
+			}
+			
+			{
+				auto compile_log = log("ShaderMan");
+				compile_log << "Compiling " << shaderTypeString(type) << " (" << version << ") '" << path << "'..." << std::endl;
+
+				// display source string info
+				for (size_t i = 0; i < source_names.size(); i++) {
+					compile_log << i << "\t: " << source_names[i] << std::endl;
+				}
+			
+				// display any output from preprocessor
+				compile_log << log_os.str();
+			}
+			
+			// specify version and define type
+			std::ostringstream text_os;
+			text_os << "#version " << version << '\n';
 			switch(type) {
 			case GL_VERTEX_SHADER:
-				text_os_head << "#define _VERTEX_\n";
+				text_os << "#define _VERTEX_\n";
 				break;
 			case GL_FRAGMENT_SHADER:
-				text_os_head << "#define _FRAGMENT_\n";
+				text_os << "#define _FRAGMENT_\n";
 				break;
 			case GL_GEOMETRY_SHADER:
-				text_os_head << "#define _GEOMETRY_\n";
+				text_os << "#define _GEOMETRY_\n";
 				break;
-			// TODO other shader types
+			case GL_TESS_CONTROL_SHADER:
+				text_os << "#define _TESS_CONTROL_\n";
+				break;
+			case GL_TESS_EVALUATION_SHADER:
+				text_os << "#define _TESS_EVALUATION_\n";
+				break;
 			default:
-				// wat do?
-				break;
+				throw shader_error("Unknown shader type.");
 			}
+
 			// append preprocessed source
-			text_os_head << text_os_main.str();
-			// display source string info
-			for (size_t i = 0; i < source_names.size(); i++) {
-				std::cout << i << "\t: " << source_names[i] << std::endl;
-			}
+			text_os << text_os_main.str();
+			
 			// now, lets compile!
-			GLuint id = compileShader(type, text_os_head.str());
+			GLuint id = compileShader(type, text_os.str());
+			
 			// add to cache
 			shader_t shader;
 			shader.type = type;
-			shader.name = name;
+			shader.name = name_stripped;
 			shader.id = id;
 			m_shaders.push_back(shader);
 			return id;
@@ -331,7 +488,7 @@ namespace initial3d {
 		inline GLuint getProgram(const std::string &name) {
 			std::string full_name = name;
 			// assemble name including auto-links
-			for (std::vector<std::string>::const_iterator it = m_auto_link.begin(); it != m_auto_link.end(); it++) {
+			for (auto it = m_auto_link.cbegin(); it != m_auto_link.cend(); it++) {
 				(full_name += ';') += *it;
 			}
 			return getProgramNoAutoLink(full_name);
@@ -340,41 +497,52 @@ namespace initial3d {
 		// name is a semicolon separated list of shader names, no shaders will be automagically linked
 		inline GLuint getProgramNoAutoLink(const std::string & name) {
 			std::string cname = canonicalProgramName(name);
+
 			// is it already linked?
-			for (std::vector<program_t>::const_iterator it = m_programs.begin(); it != m_programs.end(); it++) {
+			for (auto it = m_programs.cbegin(); it != m_programs.cend(); it++) {
 				if (it->cname == cname) {
 					// yes, return id
 					return it->id;
 				}
 			}
+
 			// nope, compile as necessary then link
 			GLuint id = glCreateProgram();
 			std::vector<std::string> shader_names;
 			disassembleProgramName(cname, shader_names);
-			for (std::vector<std::string>::const_iterator it = shader_names.begin(); it != shader_names.end(); it++) {
-				int i = it->find_last_of(".");
+			for (auto it = shader_names.cbegin(); it != shader_names.cend(); it++) {
+				size_t i = it->find_last_of(".");
 				std::string ext = it->substr(i);
-				if (ext == ".vert" || ext == ".vertex" || ext == ".vp") {
-					glAttachShader(id, getShader(GL_VERTEX_SHADER, *it));
-				} else if (ext == ".frag" || ext == ".fragment" || ext == ".fp") {
-					glAttachShader(id, getShader(GL_FRAGMENT_SHADER, *it));
-				} else if (ext == ".geom" || ext == ".geometry" || ext == ".gp") {
-					glAttachShader(id, getShader(GL_GEOMETRY_SHADER, *it));
-				}
-				// TODO other shader types
-				else {
+				// if the ext is for a specific type, only compile as that type
+				if (ext == ".vert") {
+					glAttachShader(id, getShader(GL_VERTEX_SHADER, *it, true));
+				} else if (ext == ".frag") {
+					glAttachShader(id, getShader(GL_FRAGMENT_SHADER, *it, true));
+				} else if (ext == ".geom") {
+					glAttachShader(id, getShader(GL_GEOMETRY_SHADER, *it, true));
+				} else {
 					// unable to determine type from extension, try everything
-					glAttachShader(id, getShader(GL_VERTEX_SHADER, *it));
-					glAttachShader(id, getShader(GL_FRAGMENT_SHADER, *it));
-					if (false) {
-						// only try geometry shader if supported
-						glAttachShader(id, getShader(GL_GEOMETRY_SHADER, *it));
+					static const std::vector<GLenum> types {
+						GL_VERTEX_SHADER,
+						GL_FRAGMENT_SHADER,
+						GL_GEOMETRY_SHADER,
+						GL_TESS_CONTROL_SHADER,
+						GL_TESS_EVALUATION_SHADER
+					};
+					for (GLenum type : types) {
+						try {
+							glAttachShader(id, getShader(type, *it, false));
+						} catch (shader_type_error &e) {
+							// type wasnt declared in source, skip
+						}
 					}
-					// TODO other shader types
 				}
 			}
-			std::cout << "Linking shader program '" << cname << "'..." << std::endl;
+
+			log("ShaderMan") << "Linking shader program '" << cname << "'...";
 			linkShaderProgram(id);
+			log("ShaderMan") << "Shader program compiled and linked successfully.";
+
 			// cache it
 			program_t program;
 			program.cname = cname;
@@ -387,18 +555,28 @@ namespace initial3d {
 		inline void unloadAll() {
 			glUseProgram(0);
 			// delete programs
-			for (std::vector<program_t>::const_iterator it = m_programs.begin(); it != m_programs.end(); it++) {
+			for (auto it = m_programs.cbegin(); it != m_programs.cend(); it++) {
 				glDeleteProgram(it->id);
 			}
 			// delete shaders
-			for (std::vector<shader_t>::const_iterator it = m_shaders.begin(); it != m_shaders.end(); it++) {
+			for (auto it = m_shaders.cbegin(); it != m_shaders.cend(); it++) {
 				glDeleteShader(it->id);
 			}
 			// clear cache
 			m_shaders.clear();
 			m_programs.clear();
 		}
+		
+		// get a vector of all loaded program names
+		std::vector<std::string> getLoadedProgramNames() {
+			std::vector<std::string> prog_names;
+			for (const program_t & prog : m_programs) {
+				prog_names.push_back(prog.cname);
+			}
+			return prog_names;
+		}
 
+		// ctor takes a source directory
 		inline ShaderManager(const std::string &dir) {
 			addSourceDirectory(dir);
 		}
@@ -406,4 +584,4 @@ namespace initial3d {
 
 }
 
-#endif // INITIAL3D_SHADER_H
+#endif // AMBITION_SHADER_HPP
