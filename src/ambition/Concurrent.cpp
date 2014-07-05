@@ -1,4 +1,6 @@
 
+#include <vector>
+
 #include "Concurrent.hpp"
 #include "Log.hpp"
 
@@ -82,6 +84,30 @@ namespace ambition {
 		}
 		// wake the interrupted thread - this may (will) cause spurious wakeup of other threads
 		td.condition->notify_all();
+	}
+
+	// interrupt all threads waiting on a condition variable
+	void InterruptManager::interrupt(std::condition_variable &cond) {
+		vector<thread_data_t> tdv;
+		{
+			// find waiting threads
+			lock_guard<mutex> lock(m_mutex);
+			for (auto pair : m_thread_data) {
+				if (pair.second.condition == &cond) {
+					pair.second.interrupt = true;
+					tdv.push_back(pair.second);
+				}
+			}
+		}
+		// interrupt them
+		for (auto td : tdv) {
+			{
+				// locking the mutex used for the condition wait ensures the thread
+				// is _actually_ waiting before we wake it
+				lock_guard<mutex> lock(*td.mutex);
+			}
+			td.condition->notify_all();
+		}
 	}
 
 	atomic<bool> AsyncExecutor::m_started(false);

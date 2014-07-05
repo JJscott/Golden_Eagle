@@ -48,6 +48,9 @@ namespace ambition {
 		// if thread is not waiting, it will be interrupted when next it does.
 		static void interrupt(const std::thread::id &id);
 
+		// interrupt all threads waiting on a condition variable
+		static void interrupt(std::condition_variable &cond);
+
 	};
 
 	template <class EventArgT>
@@ -63,6 +66,20 @@ namespace ambition {
 		std::map<unsigned, observer_t> m_observers;
 		std::mutex m_mutex;
 		std::condition_variable m_cond;
+
+		class waiter_guard {
+		private:
+			unsigned *m_waiters;
+
+		public:
+			inline waiter_guard(unsigned &waiters_) : m_waiters(&waiters_) {
+				(*m_waiters)++;
+			}
+
+			inline ~waiter_guard() {
+				(*m_waiters)--;
+			}
+		};
 
 	public:
 		inline Event() {}
@@ -99,12 +116,11 @@ namespace ambition {
 		// returns true if the event was fired
 		inline bool wait() {
 			std::unique_lock<std::mutex> lock(m_mutex);
+			waiter_guard waiter(m_waiters);
 			// record the notify count at start of waiting
 			unsigned count0 = m_count;
-			m_waiters++;
 			// if this thread was interrupted while waiting, this will throw
 			InterruptManager::wait(m_cond, lock);
-			m_waiters--;
 			// if the notify count changed, the event was triggered
 			return m_count != count0;
 		}
@@ -113,8 +129,8 @@ namespace ambition {
 
 		inline ~Event() {
 			std::unique_lock<std::mutex> lock(m_mutex);
-			// check nothing was waiting on this event
-			assert(m_waiters == 0);
+			// interrupt any threads waiting on this event still
+			InterruptManager::interrupt(m_cond);
 		}
 	};
 
