@@ -841,7 +841,7 @@ namespace initial3d {
 		// cross-component-type implicit homogenising vec3 cast
 		template <typename U>
 		inline operator vec3<U>() const {
-			return homogenise().xyz<U>();
+			return homogenise().template xyz<U>();
 		}
 		
 		inline vec4<T> add(const vec4<T> & rhs) const {
