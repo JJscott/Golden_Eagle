@@ -41,6 +41,27 @@ int main(void) {
 
 	log() << std::endl;
 
+
+	{
+		Event<int> event;
+
+		thread a_thread([&] {
+			log("test") << "waiting";
+			try {
+				while (!event.wait()) {
+					log("test") << "wakey-wakey";
+				}
+				log("test") << "completed - shouldnt happen";
+			} catch (interruption &e) {
+				log("test") << "interrupted";
+			}
+		});
+
+		a_thread.detach();
+
+		this_thread::sleep_for(chrono::milliseconds(1000));
+	}
+
 	ShaderManager *shaderman = new ShaderManager("./res/shader");
 
 	TriangleEntity myEntity;

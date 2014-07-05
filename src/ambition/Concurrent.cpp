@@ -11,7 +11,8 @@ namespace ambition {
 	mutex InterruptManager::m_mutex;
 	map<thread::id, InterruptManager::thread_data_t> InterruptManager::m_thread_data;
 
-	// wait on a condition variable
+	// wait on a condition variable.
+	// lock should already be locked.
 	void InterruptManager::wait(condition_variable &cond, unique_lock<mutex> &lock) {
 		// caller should have locked mutex
 		assert(lock.owns_lock());
@@ -78,36 +79,31 @@ namespace ambition {
 			td = it->second;
 		}
 		{
-			// locking the mutex used for the condition wait ensures the thread
-			// is _actually_ waiting before we wake it
+			// locking the mutex used for the condition wait ensures any other threads
+			// are either completely outside the wait sequence or are actually waiting
 			lock_guard<mutex> lock(*td.mutex);
 		}
 		// wake the interrupted thread - this may (will) cause spurious wakeup of other threads
 		td.condition->notify_all();
 	}
 
-	// interrupt all threads waiting on a condition variable
-	void InterruptManager::interrupt(std::condition_variable &cond) {
+	// interrupt all threads waiting on a condition variable.
+	// the mutex this condition variable is waiting with is assumed to be locked already.
+	void InterruptManager::interrupt(condition_variable &cond) {
 		vector<thread_data_t> tdv;
 		{
 			// find waiting threads
 			lock_guard<mutex> lock(m_mutex);
-			for (auto pair : m_thread_data) {
-				if (pair.second.condition == &cond) {
-					pair.second.interrupt = true;
-					tdv.push_back(pair.second);
+			for (auto it = m_thread_data.begin(); it != m_thread_data.end(); it++) {
+				if (it->second.condition == &cond) {
+					// set interrupt
+					it->second.interrupt = true;
+					tdv.push_back(it->second);
 				}
 			}
 		}
-		// interrupt them
-		for (auto td : tdv) {
-			{
-				// locking the mutex used for the condition wait ensures the thread
-				// is _actually_ waiting before we wake it
-				lock_guard<mutex> lock(*td.mutex);
-			}
-			td.condition->notify_all();
-		}
+		// notify waiting threads
+		cond.notify_all();
 	}
 
 	atomic<bool> AsyncExecutor::m_started(false);

@@ -41,14 +41,16 @@ namespace ambition {
 		static std::map<std::thread::id, thread_data_t> m_thread_data;
 
 	public:
-		// wait on a condition variable
+		// wait on a condition variable.
+		// lock should already be locked.
 		static void wait(std::condition_variable &cond, std::unique_lock<std::mutex> &lock);
 
 		// interrupt a thread waiting on a condition variable.
 		// if thread is not waiting, it will be interrupted when next it does.
 		static void interrupt(const std::thread::id &id);
 
-		// interrupt all threads waiting on a condition variable
+		// interrupt all threads waiting on a condition variable.
+		// the mutex this condition variable is waiting with is assumed to be locked already.
 		static void interrupt(std::condition_variable &cond);
 
 	};
@@ -128,9 +130,20 @@ namespace ambition {
 		// TODO timed wait etc
 
 		inline ~Event() {
-			std::unique_lock<std::mutex> lock(m_mutex);
-			// interrupt any threads waiting on this event still
-			InterruptManager::interrupt(m_cond);
+			// interrupt all waiting threads, then wait for them to unlock the mutex
+			auto time0 = std::chrono::steady_clock::now();
+			while (true) {
+				std::lock_guard<std::mutex> lock(m_mutex);
+				// test if we can go home yet
+				if (m_waiters == 0) break;
+				// interrupt any threads waiting on this event still
+				InterruptManager::interrupt(m_cond);
+				std::this_thread::yield();
+				if (std::chrono::steady_clock::now() - time0 > std::chrono::milliseconds(100)) {
+					// failed to finish within timeout
+					std::abort();
+				}
+			}
 		}
 	};
 
