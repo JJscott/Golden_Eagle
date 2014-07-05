@@ -1,4 +1,4 @@
-#include "Socket.hpp"
+#include "ListenSocket.hpp"
 #include "Log.hpp"
 
 #include <cstdio>
@@ -102,7 +102,7 @@ namespace ambition {
 
 		serveraddr.sin_family = AF_INET;
 		serveraddr.sin_addr.s_addr = INADDR_ANY;
-		serveraddr.sin_port = 0;
+		serveraddr.sin_port = htons(8119);
 		
 		if((bind(listener, (sockaddr*)&serveraddr, sizeof(serveraddr))) == INVALID_SOCKET)
 			throw "unable to bind()";
@@ -110,6 +110,7 @@ namespace ambition {
 		// we've bound - report the port we have bound to
 
 		listen_port_impl = ntohs(serveraddr.sin_port);
+		std::cout << "bound to: " << ntohs(serveraddr.sin_port) << std::endl;
 		log("Socket") % 0 << "Bound to port: " << ntohs(serveraddr.sin_port);
 
 		if(listen(listener, 10) == INVALID_SOCKET)

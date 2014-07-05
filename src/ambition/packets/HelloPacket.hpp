@@ -1,9 +1,12 @@
 #include "ambition/Packet.hpp"
 
 namespace ambition {
-	class HelloPacket : public Packet {
-		public:
-			const static short ID = 1;
-			static HelloPacket* dewirePacket(Packet* p) { }
-	};
+	namespace packets {
+		class HelloPacket : public Packet {
+			public:
+				HelloPacket() : Packet(1) {}
+				virtual inline void execute_handler(Session* st, DataPacket* dp) { 
+				}
+		};
+	}
 };
