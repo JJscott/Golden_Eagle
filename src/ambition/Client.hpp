@@ -3,11 +3,11 @@
 
 #include "ambition/Log.hpp"
 
-using namespace ambition;
-
-class Client {
-public:
-	
-};
+namespace ambition {
+	class Client {
+	public:
+		void target(std::string hostname, uint16_t port);
+	};
+}
 
 #endif

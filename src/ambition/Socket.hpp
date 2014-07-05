@@ -1,12 +1,22 @@
-class ListenSocket {
-	class ListenSocketImpl;
-	ListenSocketImpl *lsock;
+#ifndef SOCKET_HPP
+#define SOCKET_HPP
 
+#include <cstdio>
+#include <cstdint>
 
-public:
+namespace ambition {
+	class ListenSocket {
+		class ListenSocketImpl;
+		ListenSocketImpl *lsock;
 
-	ListenSocket();
-	~ListenSocket();
+	public:
 
-	void init();
-};
+		ListenSocket();
+		~ListenSocket();
+
+		void init();
+		uint16_t listen_port();
+	};
+}
+
+#endif
