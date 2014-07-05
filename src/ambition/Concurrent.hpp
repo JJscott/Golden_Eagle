@@ -17,11 +17,12 @@
 
 namespace ambition {
 
-	class interruption : public std::exception {
+	class interruption : public std::runtime_error {
 	public:
-		virtual const char * what() const override {
-			return "condition variable wait interrupted";
-		}
+		interruption() : runtime_error("condition variable wait interrupted") {};
+		// virtual const char * what() const override {
+		// 	return "";
+		// }
 	};
 
 	// High-level mechanism for providing interruption of condition variable waiting.

@@ -94,7 +94,7 @@ namespace ambition {
 		td.condition->notify_all();
 	}
 
-	atomic<bool> AsyncExecutor::m_started = false;
+	atomic<bool> AsyncExecutor::m_started(false);
 	blocking_queue<AsyncExecutor::task_t> AsyncExecutor::m_backQueue;
 	blocking_queue<AsyncExecutor::task_t> AsyncExecutor::m_mainQueue;
 	thread AsyncExecutor::m_thread;
