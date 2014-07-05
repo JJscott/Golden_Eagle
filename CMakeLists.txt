@@ -23,15 +23,29 @@ include_directories("${GOLDEN_SOURCE_DIR}/ext/glew-1.10.0/include")
 add_subdirectory("${GOLDEN_SOURCE_DIR}/ext/gtest" "${GOLDEN_BINARY_DIR}/ext/gtest")
 
 # compiler flags
-if(MSVC)
+#if(MSVC)
+#	# Force to always compile with W4
+#	if(CMAKE_CXX_FLAGS MATCHES "/W[0-4]")
+#		string(REGEX REPLACE "/W[0-4]" "/W4" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+#	else()
+#		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
+#   endif()
+#elseif(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
+#	# Update if necessary
+# 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic -std=c++11 -g")
+#endif()
+
+# compiler flags 
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 	# Force to always compile with W4
 	if(CMAKE_CXX_FLAGS MATCHES "/W[0-4]")
 		string(REGEX REPLACE "/W[0-4]" "/W4" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 	else()
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
 	endif()
-elseif(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
-	# Update if necessary
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic -std=c++11 -g")
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic -std=c++11 -g")
 endif()
 
