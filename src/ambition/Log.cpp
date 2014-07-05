@@ -1,6 +1,5 @@
 
 #include "Log.hpp"
-#include "Concurrent.hpp"
 
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
@@ -160,39 +159,36 @@ namespace ambition {
 	void Log::write(unsigned verbosity, unsigned type, const std::string &source, const std::string &msg) {
 		// better format maybe?
 		// Wed May 30 12:25:03 2012 [System] Error : IT BROEK
+		std::lock_guard<std::mutex> lock(m_mutex);
 
 		static const char *typestr[] = { "Information", "Warning", "Error", "???" };
 		type = type < 3 ? type : 3;
 
 		std::time_t tt = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 
-		AsyncExecutor::enqueueBackground([=] {
-			std::lock_guard<std::mutex> lock(m_mutex);
+		std::string ts = std::string(ctime(&tt));
+		ts.pop_back();
 
-			std::string ts = std::string(ctime(&tt));
-			ts.pop_back();
+		std::ostringstream ss;
+		ss << ts;
+		ss << " [" << std::setw(15) << source << "] ";
+		ss << std::setw(11) << typestr[type] << " : ";
 
-			std::ostringstream ss;
-			ss << ts;
-			ss << " [" << std::setw(15) << source << "] ";
-			ss << std::setw(11) << typestr[type] << " : ";
+		if (msg.find_first_of("\r\n") != std::string::npos) {
+			// msg contains a CR or LF - start on a new line
+			ss << std::endl;
+		}
 
-			if (msg.find_first_of("\r\n") != std::string::npos) {
-				// msg contains a CR or LF - start on a new line
-				ss << std::endl;
-			}
+		ss << msg;
 
-			ss << msg;
+		// write to stderr and stdout
+		m_cerr->write(verbosity, type, ss.str());
+		m_cout->write(verbosity, type, ss.str());
 
-			// write to stderr and stdout
-			m_cerr->write(verbosity, type, ss.str());
-			m_cout->write(verbosity, type, ss.str());
-
-			// write to all others
-			for (LogOutput *out : m_outputs) {
-				out->write(verbosity, type, ss.str());
-			}
-		});
+		// write to all others
+		for (LogOutput *out : m_outputs) {
+			out->write(verbosity, type, ss.str());
+		}
 		
 	}
 
