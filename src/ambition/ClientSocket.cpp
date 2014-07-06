@@ -4,7 +4,7 @@
 #include "ClientSocket.hpp"
 
 #ifndef _WIN32
-	typedef int SOCKET;
+	using SOCKET = int;
 	#define INVALID_SOCKET -1
 	#include <arpa/inet.h>
 	#include <unistd.h>
@@ -56,6 +56,7 @@ namespace ambition {
 		std::vector<char> to_send;
 	public:
 		ClientSocketImpl(ClientSocket*);
+		ClientSocketImpl(ClientSocket*, int);
 		static void work_thread(ClientSocketImpl* target);
 		bool connected_();
 		void begin_connect(std::string, uint16_t, int);
@@ -94,6 +95,8 @@ namespace ambition {
 		FD_ZERO_F(&wfdset);
 		FD_SET_F(client_socket, &wfdset);
 	}
+
+	ClientSocket::ClientSocketImpl::ClientSocketImpl(ClientSocket *o, int ext) : client_socket(ext), outer(o) {}
 
 	void ClientSocket::ClientSocketImpl::work_thread(ClientSocketImpl* target) {
 		timeval tv;
@@ -176,6 +179,7 @@ namespace ambition {
 
 	void ClientSocket::ClientSocketImpl::begin_connect(std::string hostname, uint16_t pt, int us_timeout) {
 		// let's a get a new thread, to deal with the socket polling
+		if(connected) throw network_error(error::neterr_already_connected, "Socket already in connected state");
 	    tv.tv_usec = us_timeout;
 
 		int rv;
@@ -242,6 +246,10 @@ namespace ambition {
 
 	ClientSocket::ClientSocket() {
 		cs_ = new ClientSocketImpl(this);
+	}
+
+	ClientSocket::ClientSocket(int ext) {
+		cs_ = new ClientSocketImpl(this, ext);
 	}
 
 	ClientSocket::~ClientSocket() {

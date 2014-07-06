@@ -1,28 +1,32 @@
 #include "ListenSocket.hpp"
 #include "Log.hpp"
+#include "Error.hpp"
 
+
+#include <thread>
 #include <cstdio>
+#include <cstring>
 
 #ifdef _WIN32
 #include <winsock.h>
+using socklen_t = int;
+#else
+using SOCKET = int;
+#define INVALID_SOCKET -1
+#include <arpa/inet.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <errno.h>
+#include <netinet/in.h>
+#define FD_CLR_F FD_CLR
+#define FD_SET_F FD_SET
+#define	closesocket(i) close(i)
 #endif
 
 namespace ambition {
 
-	#ifndef _WIN32
-		typedef int SOCKET;
-		#define INVALID_SOCKET -1
-		#include <arpa/inet.h>
-		#include <unistd.h>
-		#include <sys/types.h>
-		#include <sys/socket.h>
-		#include <errno.h>
-		#include <netinet/in.h>
-		#define FD_CLR_F FD_CLR
-		#define FD_SET_F FD_SET
-
-	#else
-
+	#ifdef _WIN32
 		#define FD_CLR_F(fd, set) u_int __i; \
 		for (__i = 0; __i < ((fd_set FAR *)(set))->fd_count; __i++) { \
 		if (((fd_set FAR *)(set))->fd_array[__i] == fd) { \
@@ -40,20 +44,22 @@ namespace ambition {
 			((fd_set FAR *)(set))->fd_array[((fd_set FAR *)(set))->fd_count++] = (fd);
 
 		
-		typedef int socklen_t;
+		
 	#endif
 
 	#define FD_ZERO_F FD_ZERO
 	#define FD_ISSET_F FD_ISSET
 
 	class ListenSocket::ListenSocketImpl {
+	public:
+		ListenSocketImpl(ListenSocket*);
 		sockaddr_in serveraddr;
 		sockaddr_in clientaddr;
 		fd_set master;
 		fd_set read_fds;
 		SOCKET fdmax;
 		SOCKET listener;
-		SOCKET newfd;
+		ListenSocket* outer;
 
 		uint16_t listen_port_impl = -1;
 
@@ -62,6 +68,8 @@ namespace ambition {
 
 		int yes = 1;
 		socklen_t addrlen;
+		std::thread* twork;
+		static void work(ListenSocket::ListenSocketImpl*);
 
 	public:
 		void init();
@@ -69,7 +77,7 @@ namespace ambition {
 	};
 
 	ListenSocket::ListenSocket() {
-		lsock = new ListenSocketImpl;
+		lsock = new ListenSocketImpl(this);
 		init();
 	}
 
@@ -80,6 +88,57 @@ namespace ambition {
 	void ListenSocket::init() { lsock->init(); }
 
 	uint16_t ListenSocket::listen_port() { return lsock->listen_port(); }
+
+	void ListenSocket::ListenSocketImpl::work(ListenSocket::ListenSocketImpl* target) {
+		int rv;
+		while(true) {
+			target->read_fds = target->master;
+			rv = select(target->fdmax+1, &target->read_fds, NULL, NULL, NULL);
+
+			if(rv == INVALID_SOCKET) {
+				network_error ne(error::neterr_select_failure, "General select() error");
+				ne.error_no = errno;
+				ne.error_message = strerror(errno);
+				throw ne;
+			}			
+
+			for(SOCKET i = 0; i <= target->fdmax; i++) {
+				if(FD_ISSET(i, &target->read_fds))
+				{
+					if(i == target->listener) {
+						target->addrlen = sizeof(target->clientaddr);
+						SOCKET newfd;
+						if((newfd = accept(target->listener, (sockaddr*)&target->clientaddr, &target->addrlen)) == INVALID_SOCKET)
+							throw "accept() error";
+
+						FD_SET_F(newfd, &target->master);
+						if(newfd > target->fdmax)
+							target->fdmax = newfd;
+
+						SocketResult sr;
+						sr.success = true;
+						sr.new_client = new ClientSocket(newfd);
+						target->outer->on_accepted.notify(sr);
+					} else {
+						int rx = recv(i, target->buf, sizeof(target->buf), 0);
+						if(rx == INVALID_SOCKET) {
+							closesocket(i);
+							FD_CLR_F(i, &target->master);
+							throw "recv error";
+
+						}
+						else if(rx == 0) {
+							printf("socket %d hung up\n", i);
+							closesocket(i);
+							FD_CLR_F(i, &target->master);
+						} else {
+							// recv
+						}
+					}
+				}
+			}
+		}
+	}
 
 	void ListenSocket::ListenSocketImpl::init() {
 		FD_ZERO_F(&master);
@@ -119,53 +178,8 @@ namespace ambition {
 		FD_SET_F(listener, &master);
 		fdmax = listener;
 
-		for (;;) {
-			read_fds = master;
-			printf("select()'ing\n");
-			if(select(fdmax+1, &read_fds, NULL, NULL, NULL) == -1) {
-				throw "select() error";
-			}
-
-			for(SOCKET i = 0; i <= fdmax; i++) {
-				if(FD_ISSET(i, &read_fds))
-				{
-					if(i == listener) {
-						addrlen = sizeof(clientaddr);
-						if((newfd = accept(listener, (sockaddr*)&clientaddr, &addrlen)) == INVALID_SOCKET)
-							throw "accept() error";
-						// printf("new socket: %d\tmaster: %d\n", newfd, master);
-						FD_SET_F(newfd, &master);
-						if(newfd > fdmax)
-							fdmax = newfd;
-
-						printf("new connection from %s on socket %d\n", inet_ntoa(clientaddr.sin_addr), newfd);
-					} else {
-						if((nBytes = recv(i, buf, sizeof(buf), 0)) <= 0)
-						{
-							if(nBytes == 0)
-								printf("socket %d hung up\n", i);
-							else
-								throw "recv error";
-	#ifndef _WIN32
-							close(i);
-	#else
-							closesocket(i);
-	#endif
-							FD_CLR_F(i, &master);
-						}
-						else {
-							for(SOCKET j = 0; j <= fdmax; j++) {
-								if(FD_ISSET_F(j, &master)) {
-									if(j != listener && j != i) {
-										if(send(j, buf, nBytes, 0) == INVALID_SOCKET)
-											throw "send() failed";
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
+		twork = new std::thread(work, this);		
 	}
+
+	ListenSocket::ListenSocketImpl::ListenSocketImpl(ListenSocket* o) : outer(o) {}
 }

@@ -10,38 +10,40 @@
 
 using namespace ambition;
 
-bool connected(SocketResult se) {
-	std::cout << "Connected!" << std::endl;
-	return false;
+
+// haha globals! :)
+int toSend = 0;
+std::vector<ClientSocket*> clients;
+
+bool recieved(SocketResult sr) {
+	if(sr.success) {
+		// send!
+		toSend += clients.size();
+		for(auto c : clients) {
+			c->begin_send(*sr.data);
+		}
+	}
 }
 
-bool recieved(SocketResult se) {
-	std::cout << "Recieved(" << se.n_bytes << "): " << se.data->get_string() << std::endl;
-	return false;
+bool sent(SocketResult sr) {
+}
+
+bool accepted(SocketResult sr) {
+	if(sr.success) {
+		ClientSocket* nc = sr.new_client;
+		clients.push_back(nc);
+		nc->on_recieved.attach(recieved);
+		nc->on_sent.attach(sent);
+	}
 }
 
 int main() {
-	ByteBuffer tst;
-	tst.add_string("Testing, testing, 123");
-	std::cout << "tst::get_string(): " << tst.get_string() << std::endl;
-	ClientSocket cs;
-	cs.on_connected.attach(connected);
-	cs.on_recieved.attach(recieved);
-	cs.begin_connect("localhost", 8118, 1000000);
-	cs.on_connected.wait();
-	if(!cs.connected()) {
-		std::cout << "Unable to connect" << std::endl;
-		return 0;
+	ListenSocket ls;
+	ls.on_accepted.attach(accepted);
+	while(true) {
+		std::string cmd;
+		std::cin >> cmd;
+		if(cmd == "quit")
+			break;
 	}
-
-	ByteBuffer bb1;
-	bb1.add_string("Hello");
-	cs.begin_send(bb1);
-
-	ByteBuffer bb2;
-	bb2.add_string(", World!");
-	cs.begin_send(bb2);
-
-	cs.on_closed.wait();
-	return 0;
 }
