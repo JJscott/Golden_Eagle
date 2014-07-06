@@ -23,9 +23,11 @@ bool recieved(SocketResult sr) {
 			c->begin_send(*sr.data);
 		}
 	}
+	return false;
 }
 
 bool sent(SocketResult sr) {
+	return false;
 }
 
 bool accepted(SocketResult sr) {
@@ -35,6 +37,7 @@ bool accepted(SocketResult sr) {
 		nc->on_recieved.attach(recieved);
 		nc->on_sent.attach(sent);
 	}
+	return false;
 }
 
 int main() {
