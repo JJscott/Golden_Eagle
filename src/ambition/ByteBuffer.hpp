@@ -14,6 +14,7 @@
 #include <string>
 #include <type_traits>
 #include <limits>
+#include <stdexcept>
 
 
 namespace ambition {
@@ -111,8 +112,9 @@ namespace ambition {
 		}
 	};
 
-	using byte_t = uint8_t;
+	using byte_t = unsigned char;
 
+	// now kinda like an output stream
 	class byte_buffer {
 		static_assert(CHAR_BIT == 8, "damn");
 	private:
@@ -137,40 +139,188 @@ namespace ambition {
 		}
 
 		template <typename IntT, typename Enable = typename std::enable_if<std::is_integral<IntT>::value, void>::type>
-		inline void add_int(IntT d) {
+		inline void add(IntT d) {
 			uintmax_t mask = uintmax_t(0xFF) << (8 * sizeof(IntT) - 8);
 			for (unsigned i = 0; i < sizeof(IntT); i++) {
 				uintmax_t md = mask & uintmax_t(d);
 				md >>= (8 * (sizeof(IntT) - i - 1));
-				add_int<byte_t>(md);
+				m_data.push_back(byte_t(md));
 				mask >>= 8;
 			}
 		}
 
-		template <>
-		inline void add_int<byte_t>(byte_t d) {
-			m_data.push_back(d);
+		template <typename IntT, typename Enable = typename std::enable_if<std::is_integral<IntT>::value, void>::type>
+		inline byte_buffer & operator<<(IntT d) {
+			add(d);
+			return *this;
 		}
 
 		template <typename IntT, typename Enable = typename std::enable_if<std::is_integral<IntT>::value, void>::type>
 		inline void add_array(const IntT *d, size_t sz) {
 			for (size_t i = 0; i < sz; i++) {
-				add_int(d[i]);
+				add(d[i]);
 			}
 		}
 
 		template <>
-		inline void add_array<byte_t>(const byte_t *d, size_t sz) {
-			m_data.insert(m_data.cend(), d, d + sz);
+		inline void add_array<unsigned char>(const unsigned char *d, size_t sz) {
+			m_data.insert(m_data.cend(), (byte_t *) d, (byte_t *) d + sz);
+		}
+
+		template <>
+		inline void add_array<signed char>(const signed char *d, size_t sz) {
+			m_data.insert(m_data.cend(), (byte_t *) d, (byte_t *) d + sz);
+		}
+
+		template <>
+		inline void add_array<char>(const char *d, size_t sz) {
+			m_data.insert(m_data.cend(), (byte_t *) d, (byte_t *) d + sz);
 		}
 
 		inline void add_string(const std::string &str) {
 			assert(str.length() <= std::numeric_limits<uint16_t>::max());
-			add_int<uint16_t>(str.length());
+			add<uint16_t>(str.length());
 			add_array(&str[0], str.length());
 		}
 
+		inline byte_buffer & operator<<(const std::string &str) {
+			add_string(str);
+			return *this;
+		}
+
+		// something like an iterator / input stream
+		class reader {
+		private:
+			const byte_buffer *m_buf;
+			size_t m_i;
+
+		public:
+			inline explicit reader(const byte_buffer &buf_) : m_buf(&buf_), m_i(0) { }
+
+			inline size_t size() const {
+				return m_buf->size();
+			}
+
+			inline ptrdiff_t remaining(size_t i) const {
+				return ptrdiff_t(m_buf->size()) - ptrdiff_t(i);
+			}
+
+			inline ptrdiff_t remaining() const {
+				return remaining(m_i);
+			}
+
+			inline size_t position() const {
+				return m_i;
+			}
+
+			inline void seek(size_t i) {
+				m_i = i;
+			}
+
+			inline reader & operator+=(ptrdiff_t offset) {
+				seek(size_t(ptrdiff_t(m_i) + offset));
+			}
+
+			inline reader & operator-=(ptrdiff_t offset) {
+				seek(size_t(ptrdiff_t(m_i) - offset));
+			}
+
+			template <typename IntT, typename Enable = typename std::enable_if<std::is_integral<IntT>::value, void>::type>
+			inline IntT peek(size_t i) const {
+				if (remaining(i) < sizeof(IntT)) throw std::range_error("byte_buffer index out of range");
+				uintmax_t ret = 0;
+				for (unsigned j = 0; j < sizeof(IntT); j++) {
+					uintmax_t b = m_buf->m_data[i + j];
+					b <<= (8 * (sizeof(IntT) - j - 1));
+					ret |= b;
+				}
+				return IntT(ret);
+			}
+
+			template <typename IntT, typename Enable = typename std::enable_if<std::is_integral<IntT>::value, void>::type>
+			inline IntT peek() const {
+				return peek<IntT>(m_i);
+			}
+
+			template <typename IntT, typename Enable = typename std::enable_if<std::is_integral<IntT>::value, void>::type>
+			inline IntT get() {
+				IntT d = peek<IntT>();
+				seek(m_i + sizeof(IntT));
+				return d;
+			}
+
+			template <typename IntT, typename Enable = typename std::enable_if<std::is_integral<IntT>::value, void>::type>
+			inline reader & operator>>(IntT &d) {
+				d = get<IntT>();
+				return *this;
+			}
+
+			template <typename IntT, typename Enable = typename std::enable_if<std::is_integral<IntT>::value, void>::type>
+			inline void peek_array(IntT *d, size_t sz, size_t i) const {
+				if (remaining(i) < sz * sizeof(IntT)) throw std::range_error("byte_buffer index out of range");
+				for (int j = 0; j < sz; j++) {
+					*d++ = peek<IntT>(i + j);
+				}
+			}
+
+			template <>
+			inline void peek_array<unsigned char>(unsigned char *d, size_t sz, size_t i) const {
+				if (remaining(i) < sz) throw std::range_error("byte_buffer index out of range");
+				std::memcpy(d, &m_buf->m_data[i], sz);
+			}
+
+			template <>
+			inline void peek_array<signed char>(signed char *d, size_t sz, size_t i) const {
+				if (remaining(i) < sz) throw std::range_error("byte_buffer index out of range");
+				std::memcpy(d, &m_buf->m_data[i], sz);
+			}
+
+			template <>
+			inline void peek_array<char>(char *d, size_t sz, size_t i) const {
+				if (remaining(i) < sz) throw std::range_error("byte_buffer index out of range");
+				std::memcpy(d, &m_buf->m_data[i], sz);
+			}
+
+			template <typename IntT, typename Enable = typename std::enable_if<std::is_integral<IntT>::value, void>::type>
+			inline void peek_array(IntT *d, size_t sz) const {
+				peek_array<IntT>(d, sz, m_i);
+			}
+
+			template <typename IntT, typename Enable = typename std::enable_if<std::is_integral<IntT>::value, void>::type>
+			inline void get_array(IntT *d, size_t sz) {
+				peek_array<IntT>(d, sz);
+				seek(m_i + sz * sizeof(IntT));
+			}
+
+			inline std::string peek_string(size_t i) const {
+				unsigned len = peek<uint16_t>(i);
+				if (remaining(i) < len) throw std::range_error("byte_buffer string length out of range");
+				return std::string((const char *) &m_buf->m_data[i + 2], len);
+			}
+
+			inline std::string peek_string() const {
+				return peek_string(m_i);
+			}
+
+			inline std::string get_string() {
+				std::string str = peek_string();
+				seek(m_i + 2 + str.length());
+				return str;
+			}
+
+			inline reader & operator>>(std::string &str) {
+				str = get_string();
+				return *this;
+			}
+
+		};
+
+		inline reader read() {
+			return reader(*this);
+		}
+
 	};
+
 }
 
 #endif 

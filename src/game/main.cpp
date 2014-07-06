@@ -43,15 +43,15 @@ int main(void) {
 	log() << std::endl;
 
 	byte_buffer bb;
-	bb.add_int(0xCAFEBABA);
-	byte_t stuff[100];
-	bb.dump(stuff);
-	log("bbtest") << std::hex << int(stuff[0]) << int(stuff[1]) << int(stuff[2]) << int(stuff[3]);
+	bb << 0xCAFEBABA << "hello world" << -42 << "goodbyte world" << -9001LL;
 
-	bb.add_string("hello world");
-	bb.dump(stuff);
-	stuff[99] = '\0';
-	log("bbtest") << (stuff + 6);
+	auto r = bb.read();
+
+	log("bbtest") << std::hex << r.get<unsigned>();
+	log("bbtest") << r.get_string();
+	log("bbtest") << r.get<int>();
+	log("bbtest") << r.get_string();
+	log("bbtest") << r.get<long long>();
 
 	{
 		Event<int> event;
