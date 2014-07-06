@@ -4,6 +4,8 @@
 #include <iostream>
 #include <vector>
 
+#include <iomanip>
+
 #include <thread>
 #include <chrono>
 
@@ -22,6 +24,7 @@
 #include "loadBitmap.hpp"
 #include "loadShader.hpp"
 
+#include <ambition/ByteBuffer.hpp>
 
 using namespace std;
 using namespace ambition;
@@ -39,6 +42,16 @@ int main(void) {
 
 	log() << std::endl;
 
+	byte_buffer bb;
+	bb.add_int(0xCAFEBABA);
+	byte_t stuff[100];
+	bb.dump(stuff);
+	log("bbtest") << std::hex << int(stuff[0]) << int(stuff[1]) << int(stuff[2]) << int(stuff[3]);
+
+	bb.add_string("hello world");
+	bb.dump(stuff);
+	stuff[99] = '\0';
+	log("bbtest") << (stuff + 6);
 
 	{
 		Event<int> event;
