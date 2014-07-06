@@ -15,7 +15,7 @@
 #include <type_traits>
 #include <limits>
 #include <stdexcept>
-
+#include <utility>
 
 namespace ambition {
 	class ByteBuffer {
@@ -137,6 +137,16 @@ namespace ambition {
 		inline byte_buffer() { }
 
 		inline byte_buffer(const byte_t *data_, size_t sz) : m_data(data_, data_ + sz) { }
+
+		byte_buffer(const byte_buffer &) = default;
+		byte_buffer & operator=(const byte_buffer &) = default;
+
+		byte_buffer(byte_buffer &&other) : m_data(std::move(other.m_data)) { }
+
+		byte_buffer & operator=(byte_buffer &&other) {
+			m_data = std::move(other.m_data);
+			return *this;
+		}
 
 		inline size_t size() const {
 			return m_data.size();
