@@ -36,8 +36,8 @@ int main(void) {
 	log().error() % 2 << "minor error";
 	log().error() << "proper error";
 
-	log().warning() % 2 << "minor warning";
-	log().warning() << "proper warning";
+	log().warning() << "minor warning";
+	log().warning() % 0 << "proper warning";
 
 	log() << std::endl;
 
@@ -128,7 +128,7 @@ int main(void) {
 	glBufferData(GL_ARRAY_BUFFER, uvs.size() * sizeof(vec3d), &uvs[0], GL_STATIC_DRAW);
 
 	log() << "getting shaders";
-	GLuint programID = shaderman->getProgram("SimpleVertexShader.vert;SimpleVertexShader.frag");
+	GLuint programID = shaderman->getProgram("test.glsl");
 	log() << "got shaders";
 
 	vec3d pos = vec3d(20, 20, 20);

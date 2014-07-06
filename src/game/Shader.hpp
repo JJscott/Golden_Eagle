@@ -1,5 +1,5 @@
 /*
- * Albireo Shader Manager
+ * Ambition Shader Manager
  *
  * Extra preprocessor directives:
  *		#include "..."		: include file relative to directory containing current file
@@ -74,27 +74,35 @@ namespace ambition {
 		explicit inline shader_link_error(const std::string &what_ = "Shader program linking failed.") : shader_error(what_) { }
 	};
 
-	inline void printShaderInfoLog(GLuint obj) {
+	inline void printShaderInfoLog(GLuint obj, bool error = false) {
 		int infologLength = 0;
 		int charsWritten = 0;
 		glGetShaderiv(obj, GL_INFO_LOG_LENGTH, &infologLength);
 		if (infologLength > 1) {
-			char *infoLog = new char[infologLength];
-			glGetShaderInfoLog(obj, infologLength, &charsWritten, infoLog);
-			log("ShaderMan") << infoLog;
-			delete[] infoLog;
+			std::vector<char> infoLog(infologLength);
+			glGetShaderInfoLog(obj, infologLength, &charsWritten, &infoLog[0]);
+			if (error) {
+				log("ShaderMan").error() << &infoLog[0];
+			} else {
+				// TODO might not be warnings
+				log("ShaderMan").warning() << &infoLog[0];
+			}
 		}
 	}
 
-	inline void printProgramInfoLog(GLuint obj) {
+	inline void printProgramInfoLog(GLuint obj, bool error = false) {
 		int infologLength = 0;
 		int charsWritten  = 0;
 		glGetProgramiv(obj, GL_INFO_LOG_LENGTH, &infologLength);
 		if (infologLength > 1) {
-			char *infoLog = new char[infologLength];
-			glGetProgramInfoLog(obj, infologLength, &charsWritten, infoLog);
-			log("ShaderMan") << infoLog;
-			delete[] infoLog;
+			std::vector<char> infoLog(infologLength);
+			glGetProgramInfoLog(obj, infologLength, &charsWritten, &infoLog[0]);
+			if (error) {
+				log("ShaderMan").error() << &infoLog[0];
+			} else {
+				// TODO might not be warnings
+				log("ShaderMan").warning() << &infoLog[0];
+			}
 		}
 	}
 
@@ -103,13 +111,14 @@ namespace ambition {
 		const char *text_c = text.c_str();
 		glShaderSource(shader, 1, &text_c, nullptr);
 		glCompileShader(shader);
-		// always print, so we can see warnings
-		printShaderInfoLog(shader);
 		GLint compile_status;
 		glGetShaderiv(shader, GL_COMPILE_STATUS, &compile_status);
 		if (!compile_status) {
+			printShaderInfoLog(shader, true);
 			throw shader_compile_error();
 		}
+		// always print, so we can see warnings
+		printShaderInfoLog(shader, false);
 		return shader;
 	}
 
@@ -137,13 +146,14 @@ namespace ambition {
 
 	inline void linkShaderProgram(GLuint prog) {
 		glLinkProgram(prog);
-		// always print, so we can see warnings
-		printProgramInfoLog(prog);
 		GLint link_status;
 		glGetProgramiv(prog, GL_LINK_STATUS, &link_status);
 		if (!link_status) {
+			printProgramInfoLog(prog, true);
 			throw shader_link_error();
 		}
+		// always print, so we can see warnings
+		printProgramInfoLog(prog, false);
 	}
 
 	struct shader_version {
@@ -435,6 +445,12 @@ namespace ambition {
 			
 			{
 				auto compile_log = log("ShaderMan");
+
+				if (!log_os.str().empty()) {
+					// pre-pre-processor log isnt empty - warning
+					compile_log.warning();
+				}
+
 				compile_log << "Compiling " << shaderTypeString(type) << " (" << version << ") '" << path << "'..." << std::endl;
 
 				// display source string info
@@ -442,7 +458,7 @@ namespace ambition {
 					compile_log << i << "\t: " << source_names[i] << std::endl;
 				}
 			
-				// display any output from preprocessor
+				// display any output from pre-pre-processor
 				compile_log << log_os.str();
 			}
 			

@@ -225,7 +225,7 @@ namespace ambition {
 		// set type to Log::warning and verbosity to 1
 		basic_logstream & warning() {
 			m_type = Log::warning;
-			m_verbosity = 0;
+			m_verbosity = 1;
 			return *this;
 		}
 
