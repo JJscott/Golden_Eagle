@@ -14,13 +14,14 @@
 #include <ambition/Log.hpp>
 #include <ambition/Config.hpp>
 #include <ambition/Concurrent.hpp>
+#include <ambition/Window.hpp>
+#include <ambition/Shader.hpp>
+#include <ambition/SceneGraph.hpp>
 
-#include "Window.hpp"
 #include "loadOBJ.hpp"
 #include "loadBitmap.hpp"
 #include "loadShader.hpp"
 
-#include "Shader.hpp"
 
 using namespace std;
 using namespace ambition;

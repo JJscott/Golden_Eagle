@@ -15,8 +15,6 @@ set_target_properties(
 # wtf was this for? -ben
 # add_custom_command(TARGET server PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/res $<TARGET_FILE_DIR:gamesrv>/res)
 
-target_link_libraries(server ambition pthread)
+add_definitions(${AMBITION_DEFINITIONS})
+target_link_libraries(server ambition ${AMBITION_LIBRARIES})
 
-if(WIN32)
-	target_link_libraries(server wsock32)
-endif()

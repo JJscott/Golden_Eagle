@@ -50,7 +50,7 @@
 #include <stdexcept>
 
 #include "Window.hpp"
-#include <ambition/Log.hpp>
+#include "Log.hpp"
 
 namespace ambition {
 
