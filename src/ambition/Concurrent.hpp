@@ -133,12 +133,12 @@ namespace ambition {
 			// interrupt all waiting threads, then wait for them to unlock the mutex
 			auto time0 = std::chrono::steady_clock::now();
 			while (true) {
+				std::this_thread::yield();
 				std::lock_guard<std::mutex> lock(m_mutex);
 				// test if we can go home yet
 				if (m_waiters == 0) break;
 				// interrupt any threads waiting on this event still
 				InterruptManager::interrupt(m_cond);
-				std::this_thread::yield();
 				if (std::chrono::steady_clock::now() - time0 > std::chrono::milliseconds(100)) {
 					// failed to finish within timeout
 					log("Event").error() << "Destructor failed to finish within timeout";
