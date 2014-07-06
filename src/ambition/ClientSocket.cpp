@@ -99,6 +99,7 @@ namespace ambition {
 		timeval tv;
 		tv.tv_sec = 5;
 		int rv;
+		char buffer[2048];
 		while(true) {
 			rv = select(target->client_socket+1, &(target->rfdset), &(target->wfdset), NULL, NULL);
 
@@ -130,8 +131,8 @@ namespace ambition {
 			} else if(rv >= 1 && target->connected) {
 				if(FD_ISSET_F(target->client_socket, &(target->rfdset))) {
 					FD_CLR_F(target->client_socket, &(target->rfdset));
-					char* buffer = new char[2048];
-					int rx = recv(target->client_socket, &buffer, 2048, 0);
+					int rx = recv(target->client_socket, buffer, 2048, 0);
+					FD_SET_F(target->client_socket, &(target->rfdset));
 					
 					if(rx == 0) {
 						// remote gone away
@@ -149,11 +150,12 @@ namespace ambition {
 
 					char* temp_buf = new char[rx];
 					memcpy(temp_buf, buffer, rx);
+					memset(buffer, 0, 2048);
 
 					sr.data = new ByteBuffer(temp_buf, rx);
 					target->outer->on_recieved.notify(sr);
 					
-					FD_SET_F(target->client_socket, &(target->rfdset));
+					
 				}
 				if(FD_ISSET_F(target->client_socket, &(target->wfdset))) {
 					FD_CLR_F(target->client_socket, &target->wfdset);

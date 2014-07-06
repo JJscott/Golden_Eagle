@@ -21,6 +21,9 @@ bool recieved(SocketResult se) {
 }
 
 int main() {
+	ByteBuffer tst;
+	tst.add_string("Testing, testing, 123");
+	std::cout << "tst::get_string(): " << tst.get_string() << std::endl;
 	ClientSocket cs;
 	cs.on_connected.attach(connected);
 	cs.on_recieved.attach(recieved);

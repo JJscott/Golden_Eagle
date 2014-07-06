@@ -98,7 +98,6 @@ namespace ambition {
 		const char* get_string() {
 			size_t len = get_short();
 			return get_bytes(len);
-
 		}
 	};
 }
