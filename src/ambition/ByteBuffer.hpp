@@ -120,6 +120,19 @@ namespace ambition {
 	private:
 		std::vector<byte_t> m_data;
 
+		// test if fpu endianness matches cpu endianness, assuming iee754 representation or similar
+		// http://stackoverflow.com/questions/2945174/floating-point-endianness
+		static inline bool test_fpu_endianness() {
+			static_assert(sizeof(float) == 4 && sizeof(double) == 8, "damn");
+			// float with sign bit and exponent bit(s) set, but least significant mantissa bits 0
+			float f = -1.0;
+			uint32_t d = reinterpret_cast<uint32_t &>(f);
+			bool mt = (d & 0x000000FF) == 0;
+			bool mf = (d & 0xFF000000) == 0;
+			assert((mt != mf) && "failed to determine host fpu endianness");
+			return mt;
+		}
+
 	public:
 		inline byte_buffer() { }
 
@@ -155,6 +168,32 @@ namespace ambition {
 			return *this;
 		}
 
+		inline void add_float(float f) {
+			if (test_fpu_endianness()) {
+				add<uint32_t>(reinterpret_cast<uint32_t &>(f));
+			} else {
+				assert(false && "unimplemented");
+			}
+		}
+
+		inline byte_buffer & operator<<(float f) {
+			add_float(f);
+			return *this;
+		}
+
+		inline void add_double(double f) {
+			if (test_fpu_endianness()) {
+				add<uint64_t>(reinterpret_cast<uint64_t &>(f));
+			} else {
+				assert(false && "unimplemented");
+			}
+		}
+
+		inline byte_buffer & operator<<(double f) {
+			add_double(f);
+			return *this;
+		}
+
 		template <typename IntT, typename Enable = typename std::enable_if<std::is_integral<IntT>::value, void>::type>
 		inline void add_array(const IntT *d, size_t sz) {
 			for (size_t i = 0; i < sz; i++) {
@@ -164,17 +203,17 @@ namespace ambition {
 
 		template <>
 		inline void add_array<unsigned char>(const unsigned char *d, size_t sz) {
-			m_data.insert(m_data.cend(), (byte_t *) d, (byte_t *) d + sz);
+			m_data.insert(m_data.cend(), reinterpret_cast<const byte_t *>(d), reinterpret_cast<const byte_t *>(d) + sz);
 		}
 
 		template <>
 		inline void add_array<signed char>(const signed char *d, size_t sz) {
-			m_data.insert(m_data.cend(), (byte_t *) d, (byte_t *) d + sz);
+			m_data.insert(m_data.cend(), reinterpret_cast<const byte_t *>(d), reinterpret_cast<const byte_t *>(d) + sz);
 		}
 
 		template <>
 		inline void add_array<char>(const char *d, size_t sz) {
-			m_data.insert(m_data.cend(), (byte_t *) d, (byte_t *) d + sz);
+			m_data.insert(m_data.cend(), reinterpret_cast<const byte_t *>(d), reinterpret_cast<const byte_t *>(d) + sz);
 		}
 
 		inline void add_string(const std::string &str) {
@@ -255,6 +294,58 @@ namespace ambition {
 				return *this;
 			}
 
+			inline float peek_float(size_t i) {
+				if (remaining(i) < sizeof(float)) throw std::range_error("byte_buffer index out of range");
+				uint32_t d = peek<uint32_t>(i);
+				if (test_fpu_endianness()) {
+					return reinterpret_cast<float &>(d);
+				} else {
+					assert(false && "not implemented");
+					return 0.0f;
+				}
+			}
+
+			inline float peek_float() {
+				return peek_float(m_i);
+			}
+
+			inline float get_float() {
+				float f = peek_float();
+				seek(m_i + sizeof(float));
+				return f;
+			}
+
+			inline reader & operator>>(float &f) {
+				f = get_float();
+				return *this;
+			}
+
+			inline double peek_double(size_t i) {
+				if (remaining(i) < sizeof(double)) throw std::range_error("byte_buffer index out of range");
+				uint64_t d = peek<uint64_t>(i);
+				if (test_fpu_endianness()) {
+					return reinterpret_cast<double &>(d);
+				} else {
+					assert(false && "not implemented");
+					return 0.0;
+				}
+			}
+
+			inline double peek_double() {
+				return peek_double(m_i);
+			}
+
+			inline double get_double() {
+				double f = peek_double();
+				seek(m_i + sizeof(double));
+				return f;
+			}
+
+			inline reader & operator>>(double &f) {
+				f = get_double();
+				return *this;
+			}
+
 			template <typename IntT, typename Enable = typename std::enable_if<std::is_integral<IntT>::value, void>::type>
 			inline void peek_array(IntT *d, size_t sz, size_t i) const {
 				if (remaining(i) < sz * sizeof(IntT)) throw std::range_error("byte_buffer index out of range");
@@ -295,7 +386,7 @@ namespace ambition {
 			inline std::string peek_string(size_t i) const {
 				unsigned len = peek<uint16_t>(i);
 				if (remaining(i) < len) throw std::range_error("byte_buffer string length out of range");
-				return std::string((const char *) &m_buf->m_data[i + 2], len);
+				return std::string(reinterpret_cast<const char *>(&m_buf->m_data[i + 2]), len);
 			}
 
 			inline std::string peek_string() const {

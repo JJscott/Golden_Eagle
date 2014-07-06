@@ -43,7 +43,7 @@ int main(void) {
 	log() << std::endl;
 
 	byte_buffer bb;
-	bb << 0xCAFEBABA << "hello world" << -42 << "goodbyte world" << -9001LL;
+	bb << 0xCAFEBABA << "hello world" << -42 << "goodbyte world" << 0.0 << 0.0f << -9000.1 << -9001LL;
 
 	auto r = bb.read();
 
@@ -51,6 +51,9 @@ int main(void) {
 	log("bbtest") << r.get_string();
 	log("bbtest") << r.get<int>();
 	log("bbtest") << r.get_string();
+	log("bbtest") << r.get_double();
+	log("bbtest") << r.get_float();
+	log("bbtest") << r.get_double();
 	log("bbtest") << r.get<long long>();
 
 	{
