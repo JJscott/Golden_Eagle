@@ -20,6 +20,7 @@ bool recieved(SocketResult sr) {
 		// send!
 		toSend += clients.size();
 		for(auto c : clients) {
+			std::cout << "sending" << std::endl;
 			c->begin_send(*sr.data);
 		}
 	}

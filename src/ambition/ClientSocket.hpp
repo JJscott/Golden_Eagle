@@ -32,7 +32,7 @@ namespace ambition {
 
 		bool connected();
 		void begin_connect(std::string host, uint16_t port, int usec);
-		void begin_send(ByteBuffer);
+		void begin_send(const ByteBuffer &);
 	};
 
 }

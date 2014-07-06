@@ -60,7 +60,7 @@ namespace ambition {
 		static void work_thread(ClientSocketImpl* target);
 		bool connected_();
 		void begin_connect(std::string, uint16_t, int);
-		void begin_send(ByteBuffer);
+		void begin_send(const ByteBuffer &);
 	};
 
 	ClientSocket::ClientSocketImpl::ClientSocketImpl(ClientSocket *o) : outer(o) { 
@@ -217,7 +217,7 @@ namespace ambition {
 		worker = new std::thread(work_thread, this);
 	}
 
-	void ClientSocket::ClientSocketImpl::begin_send(ByteBuffer bb) {
+	void ClientSocket::ClientSocketImpl::begin_send(const ByteBuffer &bb) {
 		if(!connected) {
 			throw network_error(error::neterr_not_connected, "Socket not in connected state");
 		}
@@ -240,7 +240,7 @@ namespace ambition {
 		cs_->begin_connect(host, port, usec);
 	}
 
-	void ClientSocket::begin_send(ByteBuffer bb) {
+	void ClientSocket::begin_send(const ByteBuffer &bb) {
 		cs_->begin_send(bb);
 	}
 
