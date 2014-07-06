@@ -196,6 +196,14 @@ namespace ambition {
 			return rc;
 		}
 
+		inline bool pop(T &ret) {
+			std::unique_lock<std::mutex> lock(m_mutex);
+			if (m_queue.empty()) return false;
+			ret = std::move(m_queue.back());
+			m_queue.pop_back();
+			return true;
+		}
+
 		inline bool empty() {
 			std::unique_lock<std::mutex> lock(m_mutex);
 			return m_queue.empty();
