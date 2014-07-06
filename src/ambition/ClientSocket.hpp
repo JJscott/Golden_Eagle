@@ -1,7 +1,7 @@
 #ifndef CLIENTSOCKET_HPP
 #define CLIENTSOCKET_HPP
 
-#include "ambition/Event.hpp"
+#include <ambition/Concurrent.hpp>
 
 // KNOWN ISSUES:
 // Thread may try to grab FDSET whilst it's being set by calling thread, needs mutex
