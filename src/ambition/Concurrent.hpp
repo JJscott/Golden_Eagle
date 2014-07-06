@@ -141,6 +141,7 @@ namespace ambition {
 				std::this_thread::yield();
 				if (std::chrono::steady_clock::now() - time0 > std::chrono::milliseconds(100)) {
 					// failed to finish within timeout
+					log("Event").error() << "Destructor failed to finish within timeout";
 					std::abort();
 				}
 			}
