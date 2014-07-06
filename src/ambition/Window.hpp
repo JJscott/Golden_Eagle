@@ -272,6 +272,8 @@ namespace ambition {
 		inline ~Window() {
 			destroy();
 		}
+
+		static Window * currentContext();
 	};
 
 	class create_window_args {
