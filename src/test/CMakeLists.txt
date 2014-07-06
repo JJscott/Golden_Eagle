@@ -13,4 +13,5 @@ set_target_properties(test
 	LINKER_LANGUAGE CXX
 )
 
-target_link_libraries(test ambition gtest_main)
+add_definitions(${AMBITION_DEFINITIONS})
+target_link_libraries(test gtest_main ambition ${AMBITION_LIBRARIES})

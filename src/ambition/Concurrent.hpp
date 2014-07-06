@@ -133,12 +133,12 @@ namespace ambition {
 			// interrupt all waiting threads, then wait for them to unlock the mutex
 			auto time0 = std::chrono::steady_clock::now();
 			while (true) {
+				std::this_thread::yield();
 				std::lock_guard<std::mutex> lock(m_mutex);
 				// test if we can go home yet
 				if (m_waiters == 0) break;
 				// interrupt any threads waiting on this event still
 				InterruptManager::interrupt(m_cond);
-				std::this_thread::yield();
 				if (std::chrono::steady_clock::now() - time0 > std::chrono::milliseconds(100)) {
 					// failed to finish within timeout
 					log("Event").error() << "Destructor failed to finish within timeout";
@@ -196,6 +196,14 @@ namespace ambition {
 			return rc;
 		}
 
+		inline bool pop(T &ret) {
+			std::unique_lock<std::mutex> lock(m_mutex);
+			if (m_queue.empty()) return false;
+			ret = std::move(m_queue.back());
+			m_queue.pop_back();
+			return true;
+		}
+
 		inline bool empty() {
 			std::unique_lock<std::mutex> lock(m_mutex);
 			return m_queue.empty();
@@ -211,27 +219,106 @@ namespace ambition {
 
 	private:
 		static std::atomic<bool> m_started;
-		static blocking_queue<task_t> m_backQueue;
-		static blocking_queue<task_t> m_mainQueue;
-		static std::thread m_thread;
+		static blocking_queue<task_t> m_fast_queue, m_slow_queue, m_main_queue;
+		static std::thread m_fast_thread, m_slow_thread;
 
 	public:
-		// start the background thread
-		static void start();
+		// start the background threads
+		static inline void start() {
+			if (!m_started) {
+				log("AsyncExec") % 0 << "Starting...";
+				m_fast_thread = std::thread([] {
+					log("AsyncExec:fast") % 0 << "Background thread started";
+					while (true) {
+						task_t task;
+						try {
+							task = m_fast_queue.pop();
+						} catch (interruption &e) {
+							// thread needs to quit
+							log("AsyncExec:fast") << "Interrupted, exiting";
+							break;
+						}
+						try {
+							task();
+						} catch (std::exception e) {
+							log("AsyncExec:fast").error() << "Uncaught exception; what(): " << e.what();
+						} catch (...) {
+							log("AsyncExec:fast").error() << "Uncaught exception (not derived from std::exception)";
+						}
+					}
+				});
+				m_slow_thread = std::thread([] {
+					log("AsyncExec:slow") % 0 << "Background thread started";
+					while (true) {
+						task_t task;
+						try {
+							task = m_slow_queue.pop();
+						} catch (interruption &e) {
+							// thread needs to quit
+							log("AsyncExec:slow") << "Interrupted, exiting";
+							break;
+						}
+						try {
+							task();
+						} catch (std::exception e) {
+							log("AsyncExec:slow").error() << "Uncaught exception; what(): " << e.what();
+						} catch (...) {
+							log("AsyncExec:slow").error() << "Uncaught exception (not derived from std::exception)";
+						}
+					}
+				});
+				m_started = true;
+			}
+		}
 
-		// stop the background thread. must be called before exit() to die nicely.
+		// stop the background threads. must be called before exit() to die nicely.
 		// cannot be registered with atexit() due to MSVC stdlib bug
 		// https://connect.microsoft.com/VisualStudio/feedback/details/747145/std-thread-join-hangs-if-called-after-main-exits-when-using-vs2012-rc
-		static void stop();
+		static inline void stop() {
+			if (m_started) {
+				log("AsyncExec") % 0 << "Stopping background threads...";
+				// give the last log message time to show up
+				std::this_thread::sleep_for(std::chrono::milliseconds(10));
+				InterruptManager::interrupt(m_fast_thread.get_id());
+				InterruptManager::interrupt(m_slow_thread.get_id());
+				m_fast_thread.join();
+				m_slow_thread.join();
+			}
+		}
 
-		// add a background task
-		static void enqueueBackground(const task_t &f);
+		// add a high-priority background task with expected duration < ~50ms.
+		// this always goes to the same thread.
+		static inline void enqueueFast(const task_t &f) {
+			m_fast_queue.push(f);
+		}
+
+		// add a low-priority or slow (but still non-blocking) background task
+		// this always goes to the same thread.
+		static inline void enqueueSlow(const task_t &f) {
+			m_slow_queue.push(f);
+		}
 
 		// add a task to the 'main' thread
-		static void enqueueMain(const task_t &f);
+		static inline void enqueueMain(const task_t &f) {
+			m_main_queue.push(f);
+		}
 
 		// execute tasks on the 'main' thread up to some time limit
-		static void executeMain(double dt = 0.001);
+		template <typename RepT, typename Period>
+		static inline void executeMain(const std::chrono::duration<RepT, Period> &dur) {
+			auto time1 = std::chrono::steady_clock::now() + dur;
+			do {
+				task_t task;
+				if (!m_main_queue.pop(task)) return;
+				try {
+					task();
+				} catch (std::exception e) {
+					log("AsyncExec:main").error() << "Uncaught exception; what(): " << e.what();
+				} catch (...) {
+					log("AsyncExec:main").error() << "Uncaught exception (not derived from std::exception)";
+				}
+			} while (std::chrono::steady_clock::now() < time1);
+		}
 	};
 
 }

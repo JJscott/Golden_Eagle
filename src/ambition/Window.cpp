@@ -278,6 +278,12 @@ namespace ambition {
 		return b;
 	}
 
+	Window * Window::currentContext() {
+		GLFWwindow *handle = glfwGetCurrentContext();
+		if (handle == nullptr) return nullptr;
+		return getWindow(handle);
+	}
+
 	// this should only be called from the main thread
 	create_window_args::operator Window * () {
 		log("Window") % 0 << "GLFW creating window... [title=" << m_title << "]";

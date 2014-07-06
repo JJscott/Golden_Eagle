@@ -6,7 +6,7 @@
 #include <algorithm>
 #include <string>
 
-#include "Window.hpp"
+#include <ambition/Window.hpp>
 
 #include "loadShader.hpp"
 

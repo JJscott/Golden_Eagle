@@ -12,10 +12,5 @@ set_target_properties(
     LINKER_LANGUAGE CXX
 )
 
-add_definitions(-DGLEW_STATIC -DGLEW_MX)
-
-target_link_libraries(game glew glfw ambition ${GLFW_LIBRARIES})
-
-if(WIN32)
-	target_link_libraries(game wsock32)
-endif()
+add_definitions(${AMBITION_DEFINITIONS})
+target_link_libraries(game ambition ${AMBITION_LIBRARIES})

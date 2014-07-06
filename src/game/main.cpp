@@ -14,13 +14,14 @@
 #include <ambition/Log.hpp>
 #include <ambition/Config.hpp>
 #include <ambition/Concurrent.hpp>
+#include <ambition/Window.hpp>
+#include <ambition/Shader.hpp>
+#include <ambition/SceneGraph.hpp>
 
-#include "Window.hpp"
 #include "loadOBJ.hpp"
 #include "loadBitmap.hpp"
 #include "loadShader.hpp"
 
-#include "Shader.hpp"
 
 using namespace std;
 using namespace ambition;
@@ -65,17 +66,24 @@ int main(void) {
 	window->makeContextCurrent();
 
 	Window *window2 = createWindow().share(window).title("LALALALALALALALALA");
-	thread some_thread([=] {
+
+	// give ownership of the second context to AsyncExecutor's 'fast' thread
+	AsyncExecutor::enqueueFast([=] {
 		window2->makeContextCurrent();
-		window2->visible(true);
+		window2->visible(true); // but not really
+	});
+
+	// test background GL
+	AsyncExecutor::enqueueFast([=] {
+
+		// just check this works
+		assert(Window::currentContext() == window2);
 
 		GLuint tex;
 		glGenTextures(1, &tex);
 		glBindTexture(GL_TEXTURE_2D, tex);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 1024, 1024, 0, GL_RGBA, GL_FLOAT, nullptr);
 		glDeleteTextures(1, &tex);
-
-		glfwMakeContextCurrent(nullptr);
 	});
 
 	window->onScroll.attach([](const mouse_scroll_event &e) {
@@ -234,13 +242,17 @@ int main(void) {
 		// glDisableVertexAttribArray(0);
 		glFinish();
 		window->swapBuffers();
+
 	} while(!window->shouldClose());
 
 	delete window;
-	glfwTerminate();
 
 	log("System") % 0 << "Exiting normally";
 	AsyncExecutor::stop();
+
+	delete window2;
+
+	glfwTerminate();
 
 	std::exit(EXIT_SUCCESS);
 }

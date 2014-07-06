@@ -107,66 +107,10 @@ namespace ambition {
 	}
 
 	atomic<bool> AsyncExecutor::m_started(false);
-	blocking_queue<AsyncExecutor::task_t> AsyncExecutor::m_backQueue;
-	blocking_queue<AsyncExecutor::task_t> AsyncExecutor::m_mainQueue;
-	thread AsyncExecutor::m_thread;
+	blocking_queue<AsyncExecutor::task_t> AsyncExecutor::m_fast_queue;
+	blocking_queue<AsyncExecutor::task_t> AsyncExecutor::m_slow_queue;
+	blocking_queue<AsyncExecutor::task_t> AsyncExecutor::m_main_queue;
+	thread AsyncExecutor::m_fast_thread;
+	thread AsyncExecutor::m_slow_thread;
 
-	// start the background thread
-	void AsyncExecutor::start() {
-		if (!m_started) {
-			log("AsyncExec") % 0 << "Starting...";
-			m_thread = thread([] {
-				log("AsyncExec") % 0 << "Background thread started";
-				while (true) {
-					task_t task;
-					try {
-						task = m_backQueue.pop();
-					} catch (interruption &e) {
-						// thread needs to quit
-						break;
-					}
-					try {
-						task();
-					} catch (std::exception e) {
-						log("AsyncExec").error() << "Uncaught exception; what(): " << e.what();
-					} catch (...) {
-						log("AsyncExec").error() << "Uncaught exception (not derived from std::exception)";
-					}
-				}
-			});
-			m_started = true;
-		}
-	}
-
-	// stop the background thread. must be called before exit() to die nicely.
-	void AsyncExecutor::stop() {
-		if (m_started) {
-			log("AsyncExec") % 0 << "Stopping background thread...";
-			// give the last log message time to show up
-			this_thread::sleep_for(chrono::milliseconds(10));
-			InterruptManager::interrupt(m_thread.get_id());
-			// because of this
-			// https://connect.microsoft.com/VisualStudio/feedback/details/747145/std-thread-join-hangs-if-called-after-main-exits-when-using-vs2012-rc
-			// we can't register stop with atexit
-			m_thread.join();
-		}
-	}
-
-	// add a background task
-	void AsyncExecutor::enqueueBackground(const task_t &f) {
-		m_backQueue.push(f);
-	}
-
-	// add a task to the 'main' thread
-	void AsyncExecutor::enqueueMain(const task_t &f) {
-		m_mainQueue.push(f);
-	}
-
-	// execute tasks on the 'main' thread up to some time limit
-	void AsyncExecutor::executeMain(double dt) {
-		// TODO duration control
-		while (!m_mainQueue.empty()) {
-			m_mainQueue.pop()();
-		}
-	}
 }
