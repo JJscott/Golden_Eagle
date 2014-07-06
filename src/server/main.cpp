@@ -10,67 +10,35 @@
 
 using namespace ambition;
 
-
-//class EventTest : public Event<EventTest> {
-//public:
-//	EventTest() {}
-//	~EventTest() {}
-//
-//	void doTest() { notify(); }
-//	void testTest() { log("EventTest") % Log::information << "Testing the test"; }
-//};
-//
-//class EventDelegate : public Delegate<EventTest> {
-//public:
-//	EventDelegate() {}
-//	~EventDelegate() {}
-//	void fire(EventTest *et) {
-//		log("EventTest") % Log::information << "Fired test event";
-//		et->testTest();
-//	}
-//};
-
 bool connected(SocketResult se) {
-	std::cout << "connection complete: status: " << (se.success ? "true" : "false") << std::endl;
+	std::cout << "Connected!" << std::endl;
 	return false;
 }
 
-void bad() {
-	ClientSocket cs;
-	cs.on_connected.attach(connected);
-	cs.begin_connect("localhost", 8118, 1000000);
-	cs.on_connected.wait();
-	return;
+bool recieved(SocketResult se) {
+	std::cout << "Recieved(" << se.n_bytes << "): " << se.data->get_string() << std::endl;
+	return false;
 }
 
 int main() {
-	bad();
-	return 0;
-	
-	ListenSocket socket;
-	socket.init();
-
-
-	// Config conf("server.conf");
-	
-	log("System") % 0 << "Starting...";
-	// log("ConfigTest") % Log::idgaf << conf.get("test", "abc");
-
-	//EventTest et;
-	//EventDelegate ed;
-	//et.attach(ed);
-	//et.notify();
-
-	Server server(false);
-	server.start();
-
-
-	try {
-	
-	} catch(const char* m) {
-		printf("%s\n", m);
+	ClientSocket cs;
+	cs.on_connected.attach(connected);
+	cs.on_recieved.attach(recieved);
+	cs.begin_connect("localhost", 8118, 1000000);
+	cs.on_connected.wait();
+	if(!cs.connected()) {
+		std::cout << "Unable to connect" << std::endl;
+		return 0;
 	}
 
-	std::cout << "Hit enter to exit" << std::endl;
-	std::cin.get();
+	ByteBuffer bb1;
+	bb1.add_string("Hello");
+	cs.begin_send(bb1);
+
+	ByteBuffer bb2;
+	bb2.add_string(", World!");
+	cs.begin_send(bb2);
+
+	cs.on_closed.wait();
+	return 0;
 }

@@ -1,8 +1,8 @@
 #ifndef PACKET_HPP
 #define PACKET_HPP
 
-#include "ambition/DataPacket.hpp"
-#include "ambition/Server.hpp"
+#include <ambition/ByteBuffer.hpp>
+#include <ambition/Server.hpp>
 
 namespace ambition {
 	class Session {
@@ -15,7 +15,7 @@ namespace ambition {
 		public:
 			Packet(uint16_t n_p_id) : p_id(n_p_id) {}
 			virtual inline uint16_t get_id() { return p_id; }
-			virtual inline void execute_handler(Session* st, DataPacket* dp) =0;
+			virtual inline void execute_handler(Session* st, ByteBuffer* dp) =0;
 		};
 	}
 }

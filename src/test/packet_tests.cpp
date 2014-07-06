@@ -1,5 +1,5 @@
 #include "gtest/gtest.h"
-#include "ambition/DataPacket.hpp"
+#include "ambition/ByteBuffer.hpp"
 using namespace ambition;
 
 #include <ctime>
@@ -16,13 +16,13 @@ char* get_random_bytes(int n) {
 	return bytes;
 }
 
-TEST(DataPacket, Constructor) {
-	DataPacket p;
+TEST(ByteBuffer, Constructor) {
+	ByteBuffer p;
 	EXPECT_EQ(p.size(), 0);
 }
 
-TEST(DataPacket, SingleByte) {
-	DataPacket p;
+TEST(ByteBuffer, SingleByte) {
+	ByteBuffer p;
 	char random_byte = get_random_bytes(1)[0];
 	p.add(random_byte);
 	EXPECT_EQ(p.size(), 1);
@@ -30,8 +30,8 @@ TEST(DataPacket, SingleByte) {
 	EXPECT_EQ(p.size(), 0);
 }
 
-TEST(DataPacket, SingleBytePeek) {
-	DataPacket p;
+TEST(ByteBuffer, SingleBytePeek) {
+	ByteBuffer p;
 	char random_byte = get_random_bytes(1)[0];
 	p.add(random_byte);
 	EXPECT_EQ(p.size(), 1);
@@ -39,8 +39,8 @@ TEST(DataPacket, SingleBytePeek) {
 	EXPECT_EQ(p.size(), 1);
 }
 
-TEST(DataPacket, MultiByte) {
-	DataPacket p;
+TEST(ByteBuffer, MultiByte) {
+	ByteBuffer p;
 	char* testData = get_random_bytes(test_size);
 	p.add(testData, test_size);
 	EXPECT_EQ(p.size(), test_size);
@@ -49,8 +49,8 @@ TEST(DataPacket, MultiByte) {
 	EXPECT_EQ(p.size(), 0);
 }
 
-TEST(DataPacket, MultiBytePeek) {
-	DataPacket p;
+TEST(ByteBuffer, MultiBytePeek) {
+	ByteBuffer p;
 	char* testData = get_random_bytes(test_size);
 	p.add(testData, test_size);
 	EXPECT_EQ(p.size(), test_size);

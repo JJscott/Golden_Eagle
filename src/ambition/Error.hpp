@@ -7,7 +7,10 @@ namespace ambition {
 			neterr_socket_set_blocking_failure,
 			neterr_select_failure,
 			neterr_connect_failure,
-			neterr_resolve_failure
+			neterr_resolve_failure,
+			neterr_send_failure,
+			neterr_not_connected,
+			neterr_lost_connection
 		};
 	}
 	class network_error : public std::runtime_error {

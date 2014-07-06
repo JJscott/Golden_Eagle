@@ -46,15 +46,20 @@
 namespace ambition {
 
 	class ClientSocket::ClientSocketImpl {
-		fd_set fdset;
+		fd_set wfdset;
+		fd_set rfdset;
 		SOCKET client_socket;
 		timeval tv;
 		std::thread* worker;
 		ClientSocket* outer;
+		bool connected = false;
+		std::vector<char> to_send;
 	public:
 		ClientSocketImpl(ClientSocket*);
 		static void work_thread(ClientSocketImpl* target);
+		bool connected_();
 		void begin_connect(std::string, uint16_t, int);
+		void begin_send(ByteBuffer);
 	};
 
 	ClientSocket::ClientSocketImpl::ClientSocketImpl(ClientSocket *o) : outer(o) { 
@@ -73,7 +78,7 @@ namespace ambition {
 
 		#ifdef _WIN32
 		u_long iMode=1;
-		ioctlsocket(client_socket,FIONBIO,&iMode);
+		ioctlsocket(client_socket, FIONBIO, &iMode);
 		#else
 		fcntl(client_socket, F_SETFL, O_NONBLOCK);
 		#endif
@@ -84,21 +89,27 @@ namespace ambition {
 			ne.error_message = strerror(errno);
 			throw ne;
 		}
-		FD_ZERO_F(&fdset);
-		FD_SET_F(client_socket, &fdset);
+
+		FD_ZERO_F(&rfdset);
+		FD_ZERO_F(&wfdset);
+		FD_SET_F(client_socket, &wfdset);
 	}
 
 	void ClientSocket::ClientSocketImpl::work_thread(ClientSocketImpl* target) {
+		timeval tv;
+		tv.tv_sec = 5;
 		int rv;
 		while(true) {
-			rv = select(target->client_socket+1,  NULL, &target->fdset, NULL, NULL);
+			rv = select(target->client_socket+1, &(target->rfdset), &(target->wfdset), NULL, NULL);
+
 			if(rv == INVALID_SOCKET) {
 				network_error ne(error::neterr_select_failure, "General select() error");
 				ne.error_no = errno;
 				ne.error_message = strerror(errno);
 				throw ne;
 			}
-			if (rv >= 1) {
+
+			if (rv >= 1 && !target->connected) {
 				char so_error;
 				socklen_t slen = sizeof(so_error);
 				getsockopt(target->client_socket, SOL_SOCKET, SO_ERROR, &so_error, &slen);
@@ -106,12 +117,60 @@ namespace ambition {
 				SocketResult sr;
 				sr.success = (so_error == 0);
 
-				target->outer->on_connected.notify(sr);
+				if(sr.success) {
+					target->connected = sr.success;
+
+					FD_CLR_F(target->client_socket, &target->wfdset);
+					FD_SET_F(target->client_socket, &target->rfdset);
+
+					
+				}
+				target->outer->on_connected.notify(sr);				
 				if(!sr.success) return;
+			} else if(rv >= 1 && target->connected) {
+				if(FD_ISSET_F(target->client_socket, &(target->rfdset))) {
+					FD_CLR_F(target->client_socket, &(target->rfdset));
+					char* buffer = new char[2048];
+					int rx = recv(target->client_socket, &buffer, 2048, 0);
+					
+					if(rx == 0) {
+						// remote gone away
+						target->connected = false;
+						throw network_error(error::neterr_lost_connection, "The remote host has gone away");
+					}
+
+					if(rx == INVALID_SOCKET) {
+						std::cout << "OHSHIT" << std::endl;
+					}
+
+					SocketResult sr;
+					sr.success = true;
+					sr.n_bytes = rx;
+
+					char* temp_buf = new char[rx];
+					memcpy(temp_buf, buffer, rx);
+
+					sr.data = new ByteBuffer(temp_buf, rx);
+					target->outer->on_recieved.notify(sr);
+					
+					FD_SET_F(target->client_socket, &(target->rfdset));
+				}
+				if(FD_ISSET_F(target->client_socket, &(target->wfdset))) {
+					FD_CLR_F(target->client_socket, &target->wfdset);
+					int rv = send(target->client_socket, &(target->to_send[0]), target->to_send.size(), 0);
+					if(rv == INVALID_SOCKET) {
+						network_error ne(error::neterr_send_failure, "Unable to send");
+						ne.error_no = errno;
+						ne.error_message = strerror(errno);
+						throw ne;
+					}
+				}
 			}
-			return;
 		}
 	}
+
+	
+	bool ClientSocket::ClientSocketImpl::connected_() { return connected; }
 
 	void ClientSocket::ClientSocketImpl::begin_connect(std::string hostname, uint16_t pt, int us_timeout) {
 		// let's a get a new thread, to deal with the socket polling
@@ -135,25 +194,48 @@ namespace ambition {
 
 		rv = getaddrinfo(hostname.c_str(), pt_str, &hints, &rp);
 		if(rv != 0) {
-				network_error ne(error::neterr_resolve_failure, "Failed to get address for hostname");
-				ne.error_no = errno;
-				ne.error_message = strerror(errno);
-				throw ne;
+			network_error ne(error::neterr_resolve_failure, "Failed to get address for hostname");
+			ne.error_no = errno;
+			ne.error_message = strerror(errno);
+			throw ne;
 		}
 
 		rv = connect(client_socket, rp->ai_addr, rp->ai_addrlen);
 		if(rv != INVALID_SOCKET) {
-				network_error ne(error::neterr_connect_failure, "Unable to begin connect request");
-				ne.error_no = errno;
-				ne.error_message = strerror(errno);
-				throw ne;
+			network_error ne(error::neterr_connect_failure, "Unable to begin connect request");
+			ne.error_no = errno;
+			ne.error_message = strerror(errno);
+			throw ne;
 		}
 
 		worker = new std::thread(work_thread, this);
 	}
 
+	void ClientSocket::ClientSocketImpl::begin_send(ByteBuffer bb) {
+		if(!connected) {
+			throw network_error(error::neterr_not_connected, "Socket not in connected state");
+		}
+
+		const char* msg = bb.data();
+		int to_send = bb.size();
+		int already_sent = 0;
+
+		while(already_sent < to_send) {
+			int tx = send(client_socket, msg+already_sent, to_send-already_sent, 0);
+			if(tx == INVALID_SOCKET) break;
+			already_sent += tx;
+		}
+
+	}
+
+	bool ClientSocket::connected() { return cs_->connected_(); }
+
 	void ClientSocket::begin_connect(std::string host, uint16_t port, int usec) {
 		cs_->begin_connect(host, port, usec);
+	}
+
+	void ClientSocket::begin_send(ByteBuffer bb) {
+		cs_->begin_send(bb);
 	}
 
 	ClientSocket::ClientSocket() {
