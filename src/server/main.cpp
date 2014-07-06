@@ -2,13 +2,11 @@
 #include <cstdlib>
 #include <iostream>
 
-#include "ambition/Log.hpp"
-#include "ambition/Config.hpp"
-#include "ambition/Server.hpp"
-#include "ambition/ClientSocket.hpp"
-#include "ambition/Event.hpp"
-#include "ambition/Scene.hpp"
-#include "ambition/TreeEntity.hpp"
+#include <ambition/Log.hpp>
+#include <ambition/Config.hpp>
+#include <ambition/Server.hpp>
+#include <ambition/ClientSocket.hpp>
+#include <ambition/Concurrent.hpp>
 
 using namespace ambition;
 
@@ -54,8 +52,6 @@ int main() {
 
 
 	// Config conf("server.conf");
-	Scene *scene = new Scene;
-	scene->addEntity(new TreeEntity);
 	
 	log("System") % 0 << "Starting...";
 	// log("ConfigTest") % Log::idgaf << conf.get("test", "abc");

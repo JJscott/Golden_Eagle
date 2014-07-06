@@ -1,7 +1,5 @@
 #include "Server.hpp"
 
-#include "ambition/Scene.hpp"
-
 namespace ambition {
 	Server::Server() {
 		isPublic = false;
@@ -19,7 +17,6 @@ namespace ambition {
 
 		lsocket = new ListenSocket;
 
-		Scene *s = new Scene;
 	}
 
 	uint16_t Server::listen_port() {

@@ -13,15 +13,12 @@
 #include <ambition/Ambition.hpp>
 #include <ambition/Log.hpp>
 #include <ambition/Config.hpp>
-#include <ambition/SceneRoot.hpp>
-#include <ambition/SceneNode.hpp>
 #include <ambition/Concurrent.hpp>
 
 #include "Window.hpp"
 #include "loadOBJ.hpp"
 #include "loadBitmap.hpp"
 #include "loadShader.hpp"
-#include "TriangleEntity.hpp"
 
 #include "Shader.hpp"
 
@@ -63,8 +60,6 @@ int main(void) {
 	}
 
 	ShaderManager *shaderman = new ShaderManager("./res/shader");
-
-	TriangleEntity myEntity;
 
 	Window *window = createWindow().size(1024, 768).title("Golden Eagle").visible(true);
 	window->makeContextCurrent();
