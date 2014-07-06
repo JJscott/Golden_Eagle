@@ -1,3 +1,6 @@
+#ifndef ERROR_HEADER
+#define ERROR_HEADER
+
 namespace ambition {
 	
 
@@ -10,7 +13,8 @@ namespace ambition {
 			neterr_resolve_failure,
 			neterr_send_failure,
 			neterr_not_connected,
-			neterr_lost_connection
+			neterr_lost_connection,
+			neterr_already_connected
 		};
 	}
 	class network_error : public std::runtime_error {
@@ -21,3 +25,5 @@ namespace ambition {
 		network_error(error::network_errors et, std::string msg) : std::runtime_error(msg), type(et) {}
 	};
 }
+
+#endif

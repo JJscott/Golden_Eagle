@@ -6,14 +6,15 @@
 
 // KNOWN ISSUES:
 // Thread may try to grab FDSET whilst it's being set by calling thread, needs mutex
-// Needs send, recieve, close
 // Dtor should call close()
 
 namespace ambition {
+	class ClientSocket;
 	struct SocketResult {
 		bool success;
 		int n_bytes;
 		ByteBuffer* data;
+		ClientSocket* new_client;
 	};
 
 	class ClientSocket {	
@@ -21,7 +22,9 @@ namespace ambition {
 		ClientSocketImpl* cs_;
 	public:
 		ClientSocket();
+		ClientSocket(int ext);
 		~ClientSocket();
+
 		Event<SocketResult> on_connected;
 		Event<SocketResult> on_sent;
 		Event<SocketResult> on_recieved;
