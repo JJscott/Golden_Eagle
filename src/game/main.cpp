@@ -43,18 +43,19 @@ int main(void) {
 	log() << std::endl;
 
 	byte_buffer bb;
-	bb << 0xCAFEBABA << "hello world" << -42 << "goodbyte world" << 0.0 << 0.0f << -9000.1 << -9001LL;
+	bb << 0xCAFEBABA << "hello world" << -42 << "goodbyte world" << 0.0 << 0.0f << -9000.1 << -9001LL << "done";
 
 	auto r = bb.read();
 
 	log("bbtest") << std::hex << r.get<unsigned>();
-	log("bbtest") << r.get_string();
+	log("bbtest") << r.get<string>();
 	log("bbtest") << r.get<int>();
-	log("bbtest") << r.get_string();
-	log("bbtest") << r.get_double();
-	log("bbtest") << r.get_float();
-	log("bbtest") << r.get_double();
+	log("bbtest") << r.get<string>();
+	log("bbtest") << r.get<double>();
+	log("bbtest") << r.get<float>();
+	log("bbtest") << r.get<double>();
 	log("bbtest") << r.get<long long>();
+	log("bbtest") << r.get<string>();
 
 	{
 		Event<int> event;
