@@ -5,17 +5,20 @@
 #include <ambition/Server.hpp>
 
 namespace ambition {
-	class Session {
-	public:
-	};
-
 	namespace packets {
+		enum packet_id {
+			client_to_server_hello = 0,
+			server_to_client_hello
+		};
+
 		class Packet {
-			uint16_t p_id;
 		public:
-			Packet(uint16_t n_p_id) : p_id(n_p_id) {}
-			virtual inline uint16_t get_id() { return p_id; }
-			virtual inline void execute_handler(Session* st, ByteBuffer* dp) =0;
+			virtual inline uint16_t get_id()=0;
+			virtual inline void handle()=0; // todo: needs arguments
+		};
+
+		class packet_factory {
+			virtual inline Packet* deserialise(byte_buffer::reader&)=0;
 		};
 	}
 }

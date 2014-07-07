@@ -11,11 +11,11 @@
 
 namespace ambition {
 	class MessageFactory {
-		std::map<uint16_t, ambition::packets::Packet*> pid_map;
+		std::map<uint16_t, ambition::packets::packet_factory*> pid_map;
 	public:
-		void add_handler(ambition::packets::Packet* p) {
+		void add_handler(uint16_t id, ambition::packets::packet_factory* p) {
 			// TODO: Check if p->get_id() in pid_map.keys
-			pid_map[p->get_id()] = p;
+			pid_map[id] = p;
 		}
 	};
 
