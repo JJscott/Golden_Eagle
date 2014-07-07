@@ -10,7 +10,6 @@
 
 using namespace ambition;
 
-
 // haha globals! :)
 int toSend = 0;
 std::vector<ClientSocket*> clients;
@@ -21,8 +20,10 @@ bool recieved(SocketResult sr) {
 		// send!
 		toSend += clients.size();
 		for(auto c : clients) {
-			std::cout << "sending" << std::endl;
-			c->begin_send(*(sr.data));
+			if(c != sr.client) {
+				std::cout << "sending" << std::endl;
+				c->begin_send(*(sr.data));
+			}
 		}
 	}
 	return false;
@@ -34,7 +35,7 @@ bool sent(SocketResult sr) {
 
 bool accepted(SocketResult sr) {
 	if(sr.success) {
-		ClientSocket* nc = sr.new_client;
+		ClientSocket* nc = sr.client;
 		nc->on_recieved.attach(recieved);
 		nc->on_sent.attach(sent);
 		clients.push_back(nc);

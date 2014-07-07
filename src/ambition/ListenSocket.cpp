@@ -120,7 +120,7 @@ namespace ambition {
 						sr.success = true;
 						ClientSocket* cs_new = new ClientSocket(newfd);
 						target->cons[newfd] = cs_new;
-						sr.new_client = cs_new;
+						sr.client = cs_new;
 						target->outer->on_accepted.notify(sr);
 					} else {
 						int rx = recv(i, target->buf, sizeof(target->buf), 0);
@@ -143,6 +143,7 @@ namespace ambition {
 								SocketResult sr;
 								sr.success = true;
 								sr.data = new ByteBuffer(target->buf, rx);
+								sr.client = cif->second;
 								cif->second->on_recieved.notify(sr);
 							}
 						}
