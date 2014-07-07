@@ -405,7 +405,7 @@ namespace ambition {
 
 		};
 
-		inline reader read() {
+		inline reader read() const {
 			return reader(*this);
 		}
 
