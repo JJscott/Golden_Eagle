@@ -16,12 +16,13 @@ int toSend = 0;
 std::vector<ClientSocket*> clients;
 
 bool recieved(SocketResult sr) {
+	std::cout << "recv: " << sr.data->data() << std::endl;
 	if(sr.success) {
 		// send!
 		toSend += clients.size();
 		for(auto c : clients) {
 			std::cout << "sending" << std::endl;
-			c->begin_send(*sr.data);
+			c->begin_send(*(sr.data));
 		}
 	}
 	return false;
@@ -34,9 +35,12 @@ bool sent(SocketResult sr) {
 bool accepted(SocketResult sr) {
 	if(sr.success) {
 		ClientSocket* nc = sr.new_client;
-		clients.push_back(nc);
 		nc->on_recieved.attach(recieved);
 		nc->on_sent.attach(sent);
+		clients.push_back(nc);
+		std::cout << "accepted" << std::endl;
+		
+		
 	}
 	return false;
 }

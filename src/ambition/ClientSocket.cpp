@@ -96,7 +96,9 @@ namespace ambition {
 		FD_SET_F(client_socket, &wfdset);
 	}
 
-	ClientSocket::ClientSocketImpl::ClientSocketImpl(ClientSocket *o, int ext) : client_socket(ext), outer(o) {}
+	ClientSocket::ClientSocketImpl::ClientSocketImpl(ClientSocket *o, int ext) : client_socket(ext), outer(o) {
+		connected = true;
+	}
 
 	void ClientSocket::ClientSocketImpl::work_thread(ClientSocketImpl* target) {
 		timeval tv;
