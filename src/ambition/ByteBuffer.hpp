@@ -12,6 +12,7 @@
 #include <cassert>
 #include <cstddef>
 #include <vector>
+#include <iostream>
 #include <string>
 #include <type_traits>
 #include <limits>

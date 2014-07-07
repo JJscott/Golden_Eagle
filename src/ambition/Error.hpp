@@ -14,7 +14,8 @@ namespace ambition {
 			neterr_send_failure,
 			neterr_not_connected,
 			neterr_lost_connection,
-			neterr_already_connected
+			neterr_already_connected,
+			neterr_packet_id_not_found
 		};
 	}
 	class network_error : public std::runtime_error {

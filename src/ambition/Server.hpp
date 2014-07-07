@@ -12,6 +12,7 @@ namespace ambition {
 	class Server {
 		bool isPublic = false;
 		ListenSocket* lsocket;
+		PacketHandler handler;
 	public:
 		Server();
 		Server(bool);
