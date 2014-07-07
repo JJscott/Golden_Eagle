@@ -10,6 +10,7 @@
 #include <climits>
 #include <cstring>
 #include <cassert>
+#include <cstddef>
 #include <vector>
 #include <string>
 #include <type_traits>
@@ -211,31 +212,9 @@ namespace ambition {
 			}
 		}
 
-		template <>
-		inline void add_array<unsigned char>(const unsigned char *d, size_t sz) {
-			m_data.insert(m_data.cend(), reinterpret_cast<const byte_t *>(d), reinterpret_cast<const byte_t *>(d) + sz);
-		}
+		inline void add_string(const std::string &str);
 
-		template <>
-		inline void add_array<signed char>(const signed char *d, size_t sz) {
-			m_data.insert(m_data.cend(), reinterpret_cast<const byte_t *>(d), reinterpret_cast<const byte_t *>(d) + sz);
-		}
-
-		template <>
-		inline void add_array<char>(const char *d, size_t sz) {
-			m_data.insert(m_data.cend(), reinterpret_cast<const byte_t *>(d), reinterpret_cast<const byte_t *>(d) + sz);
-		}
-
-		inline void add_string(const std::string &str) {
-			assert(str.length() <= std::numeric_limits<uint16_t>::max());
-			add<uint16_t>(str.length());
-			add_array(&str[0], str.length());
-		}
-
-		inline byte_buffer & operator<<(const std::string &str) {
-			add_string(str);
-			return *this;
-		}
+		inline byte_buffer & operator<<(const std::string &str);
 
 		// something like an iterator / input stream
 		class reader {
@@ -250,11 +229,11 @@ namespace ambition {
 				return m_buf->size();
 			}
 
-			inline ptrdiff_t remaining(size_t i) const {
-				return ptrdiff_t(m_buf->size()) - ptrdiff_t(i);
+			inline std::ptrdiff_t remaining(size_t i) const {
+				return std::ptrdiff_t(m_buf->size()) - std::ptrdiff_t(i);
 			}
 
-			inline ptrdiff_t remaining() const {
+			inline std::ptrdiff_t remaining() const {
 				return remaining(m_i);
 			}
 
@@ -266,17 +245,19 @@ namespace ambition {
 				m_i = i;
 			}
 
-			inline reader & operator+=(ptrdiff_t offset) {
+			inline reader & operator+=(std::ptrdiff_t offset) {
 				seek(size_t(ptrdiff_t(m_i) + offset));
+				return *this;
 			}
 
-			inline reader & operator-=(ptrdiff_t offset) {
+			inline reader & operator-=(std::ptrdiff_t offset) {
 				seek(size_t(ptrdiff_t(m_i) - offset));
+				return *this;
 			}
 
 			template <typename IntT, typename Enable = typename std::enable_if<std::is_integral<IntT>::value, void>::type>
 			inline IntT peek(size_t i) const {
-				if (remaining(i) < sizeof(IntT)) throw std::range_error("byte_buffer index out of range");
+				if (remaining(i) < std::ptrdiff_t(sizeof(IntT))) throw std::range_error("byte_buffer index out of range");
 				uintmax_t ret = 0;
 				for (unsigned j = 0; j < sizeof(IntT); j++) {
 					uintmax_t b = m_buf->m_data[i + j];
@@ -305,7 +286,7 @@ namespace ambition {
 			}
 
 			inline float peek_float(size_t i) {
-				if (remaining(i) < sizeof(float)) throw std::range_error("byte_buffer index out of range");
+				if (remaining(i) < std::ptrdiff_t(sizeof(float))) throw std::range_error("byte_buffer index out of range");
 				uint32_t d = peek<uint32_t>(i);
 				if (test_fpu_endianness()) {
 					return reinterpret_cast<float &>(d);
@@ -331,7 +312,7 @@ namespace ambition {
 			}
 
 			inline double peek_double(size_t i) {
-				if (remaining(i) < sizeof(double)) throw std::range_error("byte_buffer index out of range");
+				if (remaining(i) < std::ptrdiff_t(sizeof(double))) throw std::range_error("byte_buffer index out of range");
 				uint64_t d = peek<uint64_t>(i);
 				if (test_fpu_endianness()) {
 					return reinterpret_cast<double &>(d);
@@ -358,28 +339,10 @@ namespace ambition {
 
 			template <typename IntT, typename Enable = typename std::enable_if<std::is_integral<IntT>::value, void>::type>
 			inline void peek_array(IntT *d, size_t sz, size_t i) const {
-				if (remaining(i) < sz * sizeof(IntT)) throw std::range_error("byte_buffer index out of range");
+				if (remaining(i) < std::ptrdiff_t(sz * sizeof(IntT))) throw std::range_error("byte_buffer index out of range");
 				for (int j = 0; j < sz; j++) {
 					*d++ = peek<IntT>(i + j);
 				}
-			}
-
-			template <>
-			inline void peek_array<unsigned char>(unsigned char *d, size_t sz, size_t i) const {
-				if (remaining(i) < sz) throw std::range_error("byte_buffer index out of range");
-				std::memcpy(d, &m_buf->m_data[i], sz);
-			}
-
-			template <>
-			inline void peek_array<signed char>(signed char *d, size_t sz, size_t i) const {
-				if (remaining(i) < sz) throw std::range_error("byte_buffer index out of range");
-				std::memcpy(d, &m_buf->m_data[i], sz);
-			}
-
-			template <>
-			inline void peek_array<char>(char *d, size_t sz, size_t i) const {
-				if (remaining(i) < sz) throw std::range_error("byte_buffer index out of range");
-				std::memcpy(d, &m_buf->m_data[i], sz);
 			}
 
 			template <typename IntT, typename Enable = typename std::enable_if<std::is_integral<IntT>::value, void>::type>
@@ -395,7 +358,7 @@ namespace ambition {
 
 			inline std::string peek_string(size_t i) const {
 				unsigned len = peek<uint16_t>(i);
-				if (remaining(i) < len) throw std::range_error("byte_buffer string length out of range");
+				if (remaining(i) < std::ptrdiff_t(len)) throw std::range_error("byte_buffer string length out of range");
 				return std::string(reinterpret_cast<const char *>(&m_buf->m_data[i + 2]), len);
 			}
 
@@ -421,6 +384,50 @@ namespace ambition {
 		}
 
 	};
+	
+	template <>
+	inline void byte_buffer::add_array<unsigned char>(const unsigned char *d, size_t sz) {
+		m_data.insert<const byte_t *>(m_data.end(), reinterpret_cast<const byte_t *>(d), reinterpret_cast<const byte_t *>(d) + sz);
+	}
+
+	template <>
+	inline void byte_buffer::add_array<signed char>(const signed char *d, size_t sz) {
+		m_data.insert<const byte_t *>(m_data.end(), reinterpret_cast<const byte_t *>(d), reinterpret_cast<const byte_t *>(d) + sz);
+	}
+
+	template <>
+	inline void byte_buffer::add_array<char>(const char *d, size_t sz) {
+		m_data.insert<const byte_t *>(m_data.end(), reinterpret_cast<const byte_t *>(d), reinterpret_cast<const byte_t *>(d) + sz);
+	}
+	
+	template <>
+	inline void byte_buffer::reader::peek_array<unsigned char>(unsigned char *d, size_t sz, size_t i) const {
+		if (remaining(i) < std::ptrdiff_t(sz)) throw std::range_error("byte_buffer index out of range");
+		std::memcpy(d, &m_buf->m_data[i], sz);
+	}
+
+	template <>
+	inline void byte_buffer::reader::peek_array<signed char>(signed char *d, size_t sz, size_t i) const {
+		if (remaining(i) < std::ptrdiff_t(sz)) throw std::range_error("byte_buffer index out of range");
+		std::memcpy(d, &m_buf->m_data[i], sz);
+	}
+
+	template <>
+	inline void byte_buffer::reader::peek_array<char>(char *d, size_t sz, size_t i) const {
+		if (remaining(i) < std::ptrdiff_t(sz)) throw std::range_error("byte_buffer index out of range");
+		std::memcpy(d, &m_buf->m_data[i], sz);
+	}
+	
+	inline void byte_buffer::add_string(const std::string &str) {
+		assert(str.length() <= std::numeric_limits<uint16_t>::max());
+		add<uint16_t>(str.length());
+		add_array(&str[0], str.length());
+	}
+
+	inline byte_buffer & byte_buffer::operator<<(const std::string &str) {
+		add_string(str);
+		return *this;
+	}
 
 }
 
