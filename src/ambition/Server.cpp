@@ -3,9 +3,6 @@
 namespace ambition {
 	Server::Server() {
 		isPublic = false;
-
-		// Packet identifiers
-		mfactory.add_handler(ambition::packets::packet_id::client_to_server_hello, new ambition::packets::cs_hello_packet_factory);
 	}
 
 	Server::Server(bool shouldBePublic) {
