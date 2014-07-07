@@ -69,6 +69,7 @@ namespace ambition {
 		int yes = 1;
 		socklen_t addrlen;
 		std::thread* twork;
+		std::map<SOCKET, ClientSocket*> cons;
 		static void work(ListenSocket::ListenSocketImpl*);
 
 	public:
@@ -117,7 +118,9 @@ namespace ambition {
 
 						SocketResult sr;
 						sr.success = true;
-						sr.new_client = new ClientSocket(newfd);
+						ClientSocket* cs_new = new ClientSocket(newfd);
+						target->cons[newfd] = cs_new;
+						sr.client = cs_new;
 						target->outer->on_accepted.notify(sr);
 					} else {
 						int rx = recv(i, target->buf, sizeof(target->buf), 0);
@@ -133,6 +136,16 @@ namespace ambition {
 							FD_CLR_F(i, &target->master);
 						} else {
 							// recv
+							std::map<SOCKET, ClientSocket*>::const_iterator cif = target->cons.find(i);
+							if(cif == target->cons.end()) {
+								// oh snap!
+							} else {
+								SocketResult sr;
+								sr.success = true;
+								sr.data = new ByteBuffer(target->buf, rx);
+								sr.client = cif->second;
+								cif->second->on_recieved.notify(sr);
+							}
 						}
 					}
 				}

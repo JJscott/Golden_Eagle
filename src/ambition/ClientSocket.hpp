@@ -14,7 +14,7 @@ namespace ambition {
 		bool success;
 		int n_bytes;
 		ByteBuffer* data;
-		ClientSocket* new_client;
+		ClientSocket* client;
 	};
 
 	class ClientSocket {	
