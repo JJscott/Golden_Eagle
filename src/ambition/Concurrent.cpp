@@ -106,11 +106,12 @@ namespace ambition {
 		cond.notify_all();
 	}
 
-	atomic<bool> AsyncExecutor::m_started(false);
+	bool AsyncExecutor::m_started(false);
 	blocking_queue<AsyncExecutor::task_t> AsyncExecutor::m_fast_queue;
 	blocking_queue<AsyncExecutor::task_t> AsyncExecutor::m_slow_queue;
 	blocking_queue<AsyncExecutor::task_t> AsyncExecutor::m_main_queue;
 	thread AsyncExecutor::m_fast_thread;
 	thread AsyncExecutor::m_slow_thread;
+	thread::id AsyncExecutor::m_main_id;
 
 }

@@ -218,15 +218,18 @@ namespace ambition {
 		using task_t = std::function<void(void)>;
 
 	private:
-		static std::atomic<bool> m_started;
+		static bool m_started;
 		static blocking_queue<task_t> m_fast_queue, m_slow_queue, m_main_queue;
 		static std::thread m_fast_thread, m_slow_thread;
+		static std::thread::id m_main_id;
 
 	public:
-		// start the background threads
+		// start the background threads.
+		// must be called from the main thread.
 		static inline void start() {
 			if (!m_started) {
 				log("AsyncExec") % 0 << "Starting...";
+				m_main_id = std::this_thread::get_id();
 				m_fast_thread = std::thread([] {
 					log("AsyncExec:fast") % 0 << "Background thread started";
 					while (true) {
@@ -240,7 +243,7 @@ namespace ambition {
 						}
 						try {
 							task();
-						} catch (std::exception e) {
+						} catch (std::exception &e) {
 							log("AsyncExec:fast").error() << "Uncaught exception; what(): " << e.what();
 						} catch (...) {
 							log("AsyncExec:fast").error() << "Uncaught exception (not derived from std::exception)";
@@ -260,7 +263,7 @@ namespace ambition {
 						}
 						try {
 							task();
-						} catch (std::exception e) {
+						} catch (std::exception &e) {
 							log("AsyncExec:slow").error() << "Uncaught exception; what(): " << e.what();
 						} catch (...) {
 							log("AsyncExec:slow").error() << "Uncaught exception (not derived from std::exception)";
@@ -271,7 +274,8 @@ namespace ambition {
 			}
 		}
 
-		// stop the background threads. must be called before exit() to die nicely.
+		// stop the background threads.
+		// must be called from the main thread before exit() to ensure nice application shutdown.
 		// cannot be registered with atexit() due to MSVC stdlib bug
 		// https://connect.microsoft.com/VisualStudio/feedback/details/747145/std-thread-join-hangs-if-called-after-main-exits-when-using-vs2012-rc
 		static inline void stop() {
@@ -287,13 +291,13 @@ namespace ambition {
 		}
 
 		// add a high-priority background task with expected duration < ~50ms.
-		// this always goes to the same thread.
+		// this always goes to the same background thread.
 		static inline void enqueueFast(const task_t &f) {
 			m_fast_queue.push(f);
 		}
 
 		// add a low-priority or slow (but still non-blocking) background task
-		// this always goes to the same thread.
+		// this always goes to the same background thread.
 		static inline void enqueueSlow(const task_t &f) {
 			m_slow_queue.push(f);
 		}
@@ -318,6 +322,12 @@ namespace ambition {
 					log("AsyncExec:main").error() << "Uncaught exception (not derived from std::exception)";
 				}
 			} while (std::chrono::steady_clock::now() < time1);
+		}
+
+		// get the id of the main thread
+		static inline std::thread::id mainThreadID() {
+			assert(m_started && "AsyncExecutor not started");
+			return m_main_id;
 		}
 	};
 
