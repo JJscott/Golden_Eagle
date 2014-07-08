@@ -13,7 +13,6 @@ namespace ambition {
 		log("Server") % 0 << "Started!";
 
 		lsocket = new ListenSocket;
-
 	}
 
 	uint16_t Server::listen_port() {

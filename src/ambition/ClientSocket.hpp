@@ -3,6 +3,7 @@
 
 #include <ambition/Concurrent.hpp>
 #include <ambition/ByteBuffer.hpp>
+#include <ambition/Packet.hpp>
 
 // KNOWN ISSUES:
 // Thread may try to grab FDSET whilst it's being set by calling thread, needs mutex
@@ -13,7 +14,7 @@ namespace ambition {
 	struct SocketResult {
 		bool success;
 		int n_bytes;
-		ByteBuffer* data;
+		byte_buffer data;
 		ClientSocket* client;
 	};
 
@@ -32,7 +33,7 @@ namespace ambition {
 
 		bool connected();
 		void begin_connect(std::string host, uint16_t port, int usec);
-		void begin_send(const ByteBuffer &);
+		void begin_send(const byte_buffer &);
 	};
 
 }

@@ -60,7 +60,7 @@ namespace ambition {
 		static void work_thread(ClientSocketImpl* target);
 		bool connected_();
 		void begin_connect(std::string, uint16_t, int);
-		void begin_send(const ByteBuffer &);
+		void begin_send(const byte_buffer &);
 	};
 
 	ClientSocket::ClientSocketImpl::ClientSocketImpl(ClientSocket *o) : outer(o) { 
@@ -104,7 +104,7 @@ namespace ambition {
 		timeval tv;
 		tv.tv_sec = 5;
 		int rv;
-		char buffer[2048];
+		byte_t buffer[2048];
 		while(true) {
 			rv = select(target->client_socket+1, &(target->rfdset), &(target->wfdset), NULL, NULL);
 
@@ -153,11 +153,9 @@ namespace ambition {
 					sr.success = true;
 					sr.n_bytes = rx;
 
-					char* temp_buf = new char[rx];
-					memcpy(temp_buf, buffer, rx);
 					memset(buffer, 0, 2048);
 
-					sr.data = new ByteBuffer(temp_buf, rx);
+					sr.data = byte_buffer(buffer, rx);
 					target->outer->on_recieved.notify(sr);
 					
 					
@@ -219,12 +217,14 @@ namespace ambition {
 		worker = new std::thread(work_thread, this);
 	}
 
-	void ClientSocket::ClientSocketImpl::begin_send(const ByteBuffer &bb) {
+	void ClientSocket::ClientSocketImpl::begin_send(const byte_buffer &bb) {
 		if(!connected) {
 			throw network_error(error::neterr_not_connected, "Socket not in connected state");
 		}
 
-		const char* msg = bb.data();
+		byte_buffer::reader reader = bb.read();
+		byte_t* msg = new byte_t[bb.size()];
+		reader.get_array(msg, bb.size());
 		int to_send = bb.size();
 		int already_sent = 0;
 
@@ -233,6 +233,7 @@ namespace ambition {
 			if(tx == INVALID_SOCKET) break;
 			already_sent += tx;
 		}
+		delete msg;
 
 	}
 
@@ -242,7 +243,7 @@ namespace ambition {
 		cs_->begin_connect(host, port, usec);
 	}
 
-	void ClientSocket::begin_send(const ByteBuffer &bb) {
+	void ClientSocket::begin_send(const byte_buffer &bb) {
 		cs_->begin_send(bb);
 	}
 

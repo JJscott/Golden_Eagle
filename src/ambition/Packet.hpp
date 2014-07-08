@@ -54,6 +54,7 @@ namespace ambition {
         }
 
         virtual void accept(PacketVisitor &v) const =0;
+        virtual byte_buffer serialize() const =0;
         virtual ~Packet() { }
 	};
 	 
@@ -69,6 +70,11 @@ namespace ambition {
        
         void accept(PacketVisitor &v) const override {
                 v.visit(*this);
+        }
+
+        byte_buffer serialize() const override {
+            byte_buffer nbuf;
+            nbuf << (uint16_t)client_version_impl;
         }
 
         uint16_t client_version() { return client_version_impl; }

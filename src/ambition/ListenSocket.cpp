@@ -63,7 +63,7 @@ namespace ambition {
 
 		uint16_t listen_port_impl = -1;
 
-		char buf[2048];
+		byte_t buf[2048];
 		int nBytes;
 
 		int yes = 1;
@@ -142,7 +142,7 @@ namespace ambition {
 							} else {
 								SocketResult sr;
 								sr.success = true;
-								sr.data = new ByteBuffer(target->buf, rx);
+								sr.data = byte_buffer(target->buf, rx);
 								sr.client = cif->second;
 								cif->second->on_recieved.notify(sr);
 							}

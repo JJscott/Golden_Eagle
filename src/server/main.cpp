@@ -15,14 +15,14 @@ int toSend = 0;
 std::vector<ClientSocket*> clients;
 
 bool recieved(SocketResult sr) {
-	std::cout << "recv: " << sr.data->data() << std::endl;
+	// std::cout << "recv: " << sr.data.read() << std::endl;
 	if(sr.success) {
 		// send!
 		toSend += clients.size();
 		for(auto c : clients) {
 			if(c != sr.client) {
 				std::cout << "sending" << std::endl;
-				c->begin_send(*(sr.data));
+				c->begin_send(sr.data);
 			}
 		}
 	}
