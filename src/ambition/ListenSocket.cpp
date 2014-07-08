@@ -123,7 +123,7 @@ namespace ambition {
 						sr.client = cs_new;
 						target->outer->on_accepted.notify(sr);
 					} else {
-						int rx = recv(i, target->buf, sizeof(target->buf), 0);
+						int rx = recv(i, reinterpret_cast<char *>(target->buf), sizeof(target->buf), 0);
 						if(rx == INVALID_SOCKET) {
 							closesocket(i);
 							FD_CLR_F(i, &target->master);

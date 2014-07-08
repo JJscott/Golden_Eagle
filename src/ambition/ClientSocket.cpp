@@ -136,7 +136,7 @@ namespace ambition {
 			} else if(rv >= 1 && target->connected) {
 				if(FD_ISSET_F(target->client_socket, &(target->rfdset))) {
 					FD_CLR_F(target->client_socket, &(target->rfdset));
-					int rx = recv(target->client_socket, buffer, 2048, 0);
+					int rx = recv(target->client_socket, reinterpret_cast<char *>(buffer), 2048, 0);
 					FD_SET_F(target->client_socket, &(target->rfdset));
 					
 					if(rx == 0) {
@@ -229,7 +229,7 @@ namespace ambition {
 		int already_sent = 0;
 
 		while(already_sent < to_send) {
-			int tx = send(client_socket, msg+already_sent, to_send-already_sent, 0);
+			int tx = send(client_socket, reinterpret_cast<char *>(msg + already_sent), to_send-already_sent, 0);
 			if(tx == INVALID_SOCKET) break;
 			already_sent += tx;
 		}
