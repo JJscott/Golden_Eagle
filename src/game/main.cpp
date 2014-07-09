@@ -34,6 +34,10 @@ int main(void) {
 
 	AsyncExecutor::start();
 	
+	AsyncExecutor::enqueueMain([] {
+		log("FOOO") << "hello world";
+	});
+
 	log().error() % 2 << "minor error";
 	log().error() << "proper error";
 
@@ -175,6 +179,8 @@ int main(void) {
 	
 	do {
 		glfwPollEvents();
+
+		AsyncExecutor::execute(chrono::milliseconds(2));
 
 		double now = glfwGetTime();
 		if (now - lastFPSTime > 1) {

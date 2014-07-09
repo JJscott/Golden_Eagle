@@ -148,7 +148,7 @@ namespace ambition {
 		}
 	};
 
-	// simple (and not quite finished) blocking queue
+	// simple blocking queue
 	template <typename T>
 	class blocking_queue {
 	private:
@@ -160,20 +160,32 @@ namespace ambition {
 		inline blocking_queue() { }
 
 		inline blocking_queue(const blocking_queue &other) {
-			assert(false && "not implemented yet");
+			std::unique_lock<std::mutex> lock1(m_mutex, std::defer_lock);
+			std::unique_lock<std::mutex> lock2(other.m_mutex, std::defer_lock);
+			std::lock(lock1, lock2);
+			m_queue = other.m_queue;
 		}
 
 		inline blocking_queue(blocking_queue &&other) {
-			assert(false && "not implemented yet");
+			std::unique_lock<std::mutex> lock1(m_mutex, std::defer_lock);
+			std::unique_lock<std::mutex> lock2(other.m_mutex, std::defer_lock);
+			std::lock(lock1, lock2);
+			m_queue = std::move(other.m_queue);
 		}
 
 		inline blocking_queue & operator=(const blocking_queue &other) {
-			assert(false && "not implemented yet");
+			std::unique_lock<std::mutex> lock1(m_mutex, std::defer_lock);
+			std::unique_lock<std::mutex> lock2(other.m_mutex, std::defer_lock);
+			std::lock(lock1, lock2);
+			m_queue = other.m_queue;
 			return *this;
 		}
 
 		inline blocking_queue & operator=(blocking_queue &&other) {
-			assert(false && "not implemented yet");
+			std::unique_lock<std::mutex> lock1(m_mutex, std::defer_lock);
+			std::unique_lock<std::mutex> lock2(other.m_mutex, std::defer_lock);
+			std::lock(lock1, lock2);
+			m_queue = std::move(other.m_queue);
 			return *this;
 		}
 
@@ -219,9 +231,11 @@ namespace ambition {
 
 	private:
 		static bool m_started;
-		static blocking_queue<task_t> m_fast_queue, m_slow_queue, m_main_queue;
+		static blocking_queue<task_t> m_fast_queue, m_slow_queue;
 		static std::thread m_fast_thread, m_slow_thread;
 		static std::thread::id m_main_id;
+		static std::mutex m_exec_mutex;
+		static std::map<std::thread::id, blocking_queue<task_t>> m_exec_queues;
 
 	public:
 		// start the background threads.
@@ -302,33 +316,59 @@ namespace ambition {
 			m_slow_queue.push(f);
 		}
 
-		// add a task to the 'main' thread
-		static inline void enqueueMain(const task_t &f) {
-			m_main_queue.push(f);
+		// add a task to a specific thread
+		static inline void enqueue(const std::thread::id &tid, const task_t &f) {
+			std::lock_guard<std::mutex> lock(m_exec_mutex);
+			auto it = m_exec_queues.find(tid);
+			if (it == m_exec_queues.end()) {
+				// create a new queue
+				blocking_queue<task_t> q;
+				q.push(f);
+				m_exec_queues[tid] = std::move(q);
+			} else {
+				it->second.push(f);
+			}
 		}
 
-		// execute tasks on the 'main' thread up to some time limit
+		// execute tasks for the current thread up to some time limit
 		template <typename RepT, typename Period>
-		static inline void executeMain(const std::chrono::duration<RepT, Period> &dur) {
-			auto time1 = std::chrono::steady_clock::now() + dur;
-			do {
-				task_t task;
-				if (!m_main_queue.pop(task)) return;
-				try {
-					task();
-				} catch (std::exception e) {
-					log("AsyncExec:main").error() << "Uncaught exception; what(): " << e.what();
-				} catch (...) {
-					log("AsyncExec:main").error() << "Uncaught exception (not derived from std::exception)";
-				}
-			} while (std::chrono::steady_clock::now() < time1);
+		static inline void execute(const std::chrono::duration<RepT, Period> &dur) {
+			blocking_queue<task_t> *q = nullptr;
+			{
+				std::lock_guard<std::mutex> lock(m_exec_mutex);
+				auto it = m_exec_queues.find(std::this_thread::get_id());
+				if (it != m_exec_queues.end()) q = &it->second;
+				// safe to release this lock because the queues never get destroyed
+			}
+			if (q) {
+				// there is a queue for this thread
+				auto time1 = std::chrono::steady_clock::now() + dur;
+				do {
+					task_t task;
+					if (!q->pop(task)) return;
+					try {
+						task();
+					} catch (std::exception e) {
+						log("AsyncExec").error() << "Uncaught exception on thread " << std::this_thread::get_id() << "; what(): " << e.what();
+					} catch (...) {
+						log("AsyncExec").error() << "Uncaught exception on thread " << std::this_thread::get_id() << " (not derived from std::exception)";
+					}
+				} while (std::chrono::steady_clock::now() < time1);
+			}
 		}
 
-		// get the id of the main thread
+		// get the id of the main thread.
+		// start() must have completed before calling.
 		static inline std::thread::id mainThreadID() {
 			assert(m_started && "AsyncExecutor not started");
 			return m_main_id;
 		}
+
+		// add a task to the 'main' thread
+		static inline void enqueueMain(const task_t &f) {
+			enqueue(mainThreadID(), f);
+		}
+
 	};
 
 }
