@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <iostream>
 #include <vector>
+#include <tuple>
 
 #include <iomanip>
 
@@ -49,6 +50,12 @@ int main(void) {
 	byte_buffer bb;
 	bb << 0xCAFEBABA << "hello world" << -42 << "goodbyte world" << 0.0 << 0.0f << -9000.1 << -9001LL << "done";
 
+	bb << make_tuple("fuuuuuuuuuuuuuuu", 1, 2, 3, std::vector<int>({1, 2, 3}), -9001.0);
+
+	array<double, 3> a = {1.0, 2.0, 3.0};
+
+	bb << a;
+
 	auto r = bb.read();
 
 	log("bbtest") << std::hex << r.get<unsigned>();
@@ -60,6 +67,13 @@ int main(void) {
 	log("bbtest") << r.get<double>();
 	log("bbtest") << r.get<long long>();
 	log("bbtest") << r.get<string>();
+
+	tuple<string, int, int, int, vector<int>, double> t;
+	r >> t;
+	log("bbtest") << get<0>(t);
+	log("bbtest") << get<4>(t)[2];
+	log("bbtest") << get<5>(t);
+	log("bbtest") << r.get<array<double, 3>>()[1];
 
 	{
 		Event<int> event;

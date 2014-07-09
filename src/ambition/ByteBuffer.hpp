@@ -12,6 +12,8 @@
 #include <cassert>
 #include <cstddef>
 #include <vector>
+#include <array>
+#include <tuple>
 #include <iostream>
 #include <string>
 #include <type_traits>
@@ -129,7 +131,52 @@ namespace ambition {
 			inline static void go(byte_buffer &this_, const std::string &str) {
 				assert(str.length() <= std::numeric_limits<uint16_t>::max());
 				this_.add<uint16_t>(str.length());
-				this_.add_array(&str[0], str.length());
+				this_.add_array<char>(&str[0], str.length());
+			}
+		};
+
+		template <typename T>
+		struct add_impl<std::vector<T>> {
+			static const bool enable = true;
+
+			inline static void go(byte_buffer &this_, const std::vector<T> &v) {
+				assert(v.size() <= std::numeric_limits<uint16_t>::max());
+				this_.add<uint16_t>(v.size());
+				this_.add_array<T>(&v[0], v.size());
+			}
+		};
+
+		template <typename T, size_t Size>
+		struct add_impl<std::array<T, Size>> {
+			static const bool enable = true;
+
+			inline static void go(byte_buffer &this_, const std::array<T, Size> &a) {
+				this_.add_array<T>(&a[0], Size);
+			}
+		};
+
+		template <typename... TR>
+		struct add_impl<std::tuple<TR...>> {
+			static const bool enable = true;
+
+			template <size_t Size, size_t I, typename TupleT>
+			struct impl {
+				inline static void go(byte_buffer &this_, const TupleT &t) {
+					this_.add(std::get<I>(t));
+					impl<Size, I + 1, TupleT>::go(this_, t);
+				}
+			};
+
+			template <size_t Size, typename TupleT>
+			struct impl<Size, Size, TupleT> {
+				inline static void go(byte_buffer &this_, const TupleT &t) {
+					// nothing - done.
+				}
+			};
+
+			inline static void go(byte_buffer &this_, const std::tuple<TR...> &t) {
+				using tuple_t = std::tuple<TR...>;
+				impl<std::tuple_size<tuple_t>::value, 0, tuple_t>::go(this_, t);
 			}
 		};
 		
@@ -281,6 +328,55 @@ namespace ambition {
 					str = std::string(reinterpret_cast<const char *>(&this_.m_buf->m_data[i + c]), len);
 					c += size_t(len);
 					return c;
+				}
+			};
+
+			template <typename T>
+			struct peek_impl<std::vector<T>> {
+				static const bool enable = true;
+
+				inline static size_t go(const reader &this_, size_t i, std::vector<T> &v) {
+					uint16_t len;
+					size_t c = peek_impl<uint16_t>::go(this_, i, len);
+					v = std::vector<T>(len);
+					c += this_.peek_array<T>(&v[0], len, i + c);
+					return c;
+				}
+			};
+
+			template <typename T, size_t Size>
+			struct peek_impl<std::array<T, Size>> {
+				static const bool enable = true;
+
+				inline static size_t go(const reader &this_, size_t i, std::array<T, Size> &a) {
+					return this_.peek_array<T>(&a[0], Size, i);
+				}
+			};
+
+			template <typename... TR>
+			struct peek_impl<std::tuple<TR...>> {
+				static const bool enable = true;
+
+				template <size_t Size, size_t I, typename TupleT>
+				struct impl {
+					inline static size_t go(const reader &this_, size_t i, TupleT &t) {
+						size_t c = peek_impl<typename std::tuple_element<I, TupleT>::type>::go(this_, i, std::get<I>(t));
+						c += impl<Size, I + 1, TupleT>::go(this_, i + c, t);
+						return c;
+					}
+				};
+
+				template <size_t Size, typename TupleT>
+				struct impl<Size, Size, TupleT> {
+					inline static size_t go(const reader &this_, size_t i, TupleT &t) {
+						// nothing - done.
+						return 0;
+					}
+				};
+
+				inline static size_t go(const reader &this_, size_t i, std::tuple<TR...> &t) {
+					using tuple_t = std::tuple<TR...>;
+					return impl<std::tuple_size<tuple_t>::value, 0, tuple_t>::go(this_, i, t);
 				}
 			};
 
