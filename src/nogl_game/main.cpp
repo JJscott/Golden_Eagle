@@ -21,7 +21,7 @@ int main(int argc, char** argv) {
 
 	std::queue<std::string> cmds;
 
-	for(int i = 0; i < argc; i++)
+	for(int i = 1; i < argc; i++)
 		cmds.push(argv[i]);
 
 	std::string cmd;
@@ -30,7 +30,8 @@ int main(int argc, char** argv) {
 	while(!cmds.empty()) {
 		cmd = cmds.front();
 		cmds.pop();
-		next = cmds.front();
+		if(!cmds.empty())
+			next = cmds.front();
 
 		if(cmd == "-p") {
 			port = atoi(next.c_str());
@@ -42,11 +43,17 @@ int main(int argc, char** argv) {
 		}
 	}
 
+	if(hostname.length() == 0 && !use_local) {
+		std::cout << "[EE] You need to specify a hostname to connect to, or use a local server" << std::endl;
+		return 0;
+	}
+
 	ambition::GameServer *sv;
 	if(use_local) sv = new ambition::LocalGameServer();
 	else sv = new ambition::RemoteGameServer(hostname, port);
 	
 	sv->ready.attach(on_sv_ready);
+	sv->ready.wait();
 }
 
 
