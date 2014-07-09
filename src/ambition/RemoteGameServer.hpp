@@ -15,7 +15,9 @@ namespace ambition {
 		bool connection_complete(SocketResult);
 	public:
 		RemoteGameServer(std::string hostname, uint16_t port);
-
+		int get_game_version() const override {
+			
+		}
 	};
 }
 
