@@ -24,6 +24,12 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/', routes);
 app.use('/users', users);
 
+var Datastore = require('nedb')
+  , db = new Datastore({ filename: 'users.nedb', autoload: true });
+
+var test_user = {username: "test", password: "test", salt: Date.now()};
+// db.insert(test_user);
+
 /// catch 404 and forward to error handler
 app.use(function(req, res, next) {
     var err = new Error('Not Found');
