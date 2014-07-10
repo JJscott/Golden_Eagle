@@ -24,6 +24,30 @@ namespace ambition {
 
 namespace ambition {
 
+	inline void checkGL() {
+		GLenum err = glGetError();
+		if (err != GL_NO_ERROR) {
+			log("GL").error() << "GL error: " << err;
+			throw std::runtime_error("BOOM!");
+		}
+	}
+	
+	inline void checkFB() {
+		if (glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+			log("GL").error() << "YOU BROKE THE FRAMEBUFFER!";
+			throw std::runtime_error("OH NOES! THE FRAMEBUFFER IS BROKED");
+		}
+	}
+
+	inline void checkExtension(const std::string &ext_name) {
+		if (glfwExtensionSupported(ext_name.c_str())) {
+			log("GL") << "Extension " << ext_name << " detected.";
+		} else {
+			log("GL").error() << "Extension " << ext_name << " not supported.";
+			throw std::runtime_error("unsupported extension");
+		}
+	}
+
 	//
 	// Point2
 	//

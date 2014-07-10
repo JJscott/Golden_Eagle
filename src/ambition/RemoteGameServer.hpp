@@ -17,6 +17,8 @@ namespace ambition {
 		RemoteGameServer(std::string hostname, uint16_t port);
 		int get_game_version() const override {
 			
+			// TODO
+			return 0;
 		}
 	};
 }
