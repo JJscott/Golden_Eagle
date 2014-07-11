@@ -77,6 +77,7 @@ namespace ambition {
 		byte_buffer serialize() const override {
 			byte_buffer nbuf;
 			nbuf << (uint16_t)client_version_impl;
+			return byte_buffer();
 		}
 
 		uint16_t client_version() { return client_version_impl; }
