@@ -13,13 +13,14 @@ set_target_properties(
 )
 
 # list libs that must be linked with ambition
-list(APPEND AMBITION_LIBRARIES_impl glew glfw ${GLFW_LIBRARIES})
+list(APPEND AMBITION_LIBRARIES_impl glew glfw ${GLFW_LIBRARIES} cryptopp ${CRYPTOPP_LIBRARIES})
 if(WIN32)
-	list(APPEND AMBITION_LIBRARIES_impl wsock32 Ws2_32)
+	list(APPEND AMBITION_LIBRARIES_impl wsock32 ws2_32)
 endif()
 
 # list macros that must be defined when using ambition
-list(APPEND AMBITION_DEFINITIONS_impl -DGLEW_STATIC -DGLEW_MX)
+# TODO export glew definitions properly
+list(APPEND AMBITION_DEFINITIONS_impl -DGLEW_STATIC -DGLEW_MX ${CRYPTOPP_DEFINITIONS})
 
 # export
 set(AMBITION_LIBRARIES ${AMBITION_LIBRARIES_impl} CACHE STRING "Ambition required libraries" FORCE)

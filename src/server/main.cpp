@@ -8,6 +8,8 @@
 #include <ambition/ClientSocket.hpp>
 #include <ambition/Concurrent.hpp>
 
+#include <CryptoPP/osrng.h>
+
 using namespace ambition;
 
 // haha globals! :)
@@ -47,6 +49,10 @@ bool accepted(SocketResult sr) {
 }
 
 int main() {
+
+	CryptoPP::AutoSeededRandomPool rand;
+	log("test") << rand.GenerateWord32();
+
 	ListenSocket ls;
 	ls.on_accepted.attach(accepted);
 	while(true) {

@@ -19,6 +19,10 @@ include_directories("${GOLDEN_SOURCE_DIR}/ext/glfw-3.0.3/include")
 add_subdirectory("${GOLDEN_SOURCE_DIR}/ext/glew-1.10.0" "${GOLDEN_BINARY_DIR}/ext/glew")
 include_directories("${GOLDEN_SOURCE_DIR}/ext/glew-1.10.0/include")
 
+# CRYPTOPP
+add_subdirectory("${GOLDEN_SOURCE_DIR}/ext/cryptopp-5.6.2" "${GOLDEN_BINARY_DIR}/ext/cryptopp")
+include_directories("${GOLDEN_SOURCE_DIR}/ext/cryptopp-5.6.2/src")
+
 # GTEST
 add_subdirectory("${GOLDEN_SOURCE_DIR}/ext/gtest" "${GOLDEN_BINARY_DIR}/ext/gtest")
 
@@ -75,6 +79,7 @@ SET_PROPERTY(TARGET glfw PROPERTY FOLDER "ext")
 SET_PROPERTY(TARGET glew PROPERTY FOLDER "ext")
 SET_PROPERTY(TARGET gtest PROPERTY FOLDER "ext")
 SET_PROPERTY(TARGET gtest_main PROPERTY FOLDER "ext")
+SET_PROPERTY(TARGET cryptopp PROPERTY FOLDER "ext")
 SET_PROPERTY(TARGET ambition PROPERTY FOLDER "src")
 SET_PROPERTY(TARGET test PROPERTY FOLDER "src")
 SET_PROPERTY(TARGET game PROPERTY FOLDER "src")
