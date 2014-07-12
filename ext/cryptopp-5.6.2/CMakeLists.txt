@@ -32,6 +32,8 @@ if(("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC") AND CMAKE_CL_64 AND CRYPTOPP_ASM
 		"THIS APPLIES EVEN IF YOU'VE DONE IT BEFORE.\n"
 		"****************************\n\n"
 	)
+elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -no-integrated-as")	
 endif()
 
 add_library(cryptopp ${cryptopp_src} ${cryptopp_hdr})
