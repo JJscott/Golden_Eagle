@@ -19,4 +19,11 @@ int main(int argc, char** argv) {
 	con.close();
 	req->on_complete.wait();
 	std::cout << req->reply()->body_s() << std::endl << std::endl;
+
+	// it still crashes here-ish
+
+	std::cin.get();
+
+
+	// you need to close the network thread properly because destroying a joinable thread object does bad things
 }
