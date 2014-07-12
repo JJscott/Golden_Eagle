@@ -2,8 +2,6 @@ project(CRYPTOPP)
 # TODO update minimum version for .asm support for Visual Studio generators
 cmake_minimum_required (VERSION 2.8.3)
 
-# GCC: require to build with -pthread, and appropriate -march for enabled intrinsics
-
 # Visual Studio (2013 anyway):
 # CMake (2.8.11) does not properly enable building of MASM sources.
 # - From Solution Explorer, project 'cryptopp' > right-click > Build Dependencies >
@@ -13,28 +11,47 @@ cmake_minimum_required (VERSION 2.8.3)
 #   Configuration Properties > General > Item Type = 'Microsoft Macro Assembler'
 # If CMake needs to recreate the cryptopp project, these settings get destroyed.
 
+set(cryptopp_asm ON)
+
+# Clang apparently can't deal with some of the inline assembly
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+	# TODO is this flag necessary?
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -no-integrated-as")
+	set(cryptopp_asm OFF)
+endif()
+
 # user options
-option(CRYPTOPP_ASM "CRYPTOPP_ASM" ON)
-option(CRYPTOPP_SSE2 "CRYPTOPP_SSE2" ON)
-option(CRYPTOPP_SSSE3 "CRYPTOPP_SSSE3" OFF)
-option(CRYPTOPP_AESNI "CRYPTOPP_AESNI" OFF)
+option(CRYPTOPP_ASM "CryptoPP Enable ASM" ${cryptopp_asm})
+option(CRYPTOPP_SSE2 "CryptoPP Enable SSE2" ON)
+option(CRYPTOPP_SSSE3 "CryptoPP Enable SSSE3" OFF)
+option(CRYPTOPP_AESNI "CryptoPP Enable AESNI" OFF)
 
 file(GLOB cryptopp_src "./src/CryptoPP/*.cpp")
 file(GLOB cryptopp_hdr "./src/CryptoPP/*.h")
 
-if(("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC") AND CMAKE_CL_64 AND CRYPTOPP_ASM)
-	enable_language(ASM_MASM)
-	file(GLOB cryptopp_asm "./src/CryptoPP/*.asm")
-	set(cryptopp_src ${cryptopp_src} ${cryptopp_asm})
-	message(STATUS "\n\n****************************\n"
-		"CryptoPP Visual Studio project requires manual intervention.\n"
-		"See directions at top of CryptoPP's primary CMakeLists.txt.\n"
-		"THIS APPLIES EVEN IF YOU'VE DONE IT BEFORE.\n"
-		"****************************\n\n"
-	)
-elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -no-integrated-as")	
-	option(CRYPTOPP_ASM "CRYPTOPP_ASM" OFF)
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+	if(CMAKE_CL_64 AND CRYPTOPP_ASM)
+		# add .asm files for msvc x64
+		enable_language(ASM_MASM)
+		file(GLOB cryptopp_asm "./src/CryptoPP/*.asm")
+		set(cryptopp_src ${cryptopp_src} ${cryptopp_asm})
+		message(STATUS "\n\n****************************\n"
+			"CryptoPP Visual Studio project requires manual intervention.\n"
+			"See directions at top of CryptoPP's primary CMakeLists.txt.\n"
+			"THIS APPLIES EVEN IF YOU'VE DONE IT BEFORE.\n"
+			"****************************\n\n"
+		)
+	endif()
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -msse2")
+	if(CRYPTOPP_SSSE3)
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mssse3")
+	endif()
+	if(CRYPTOPP_AESNI)
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -maes")
+	endif()
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -msse2")
 endif()
 
 add_library(cryptopp ${cryptopp_src} ${cryptopp_hdr})
