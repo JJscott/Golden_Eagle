@@ -6,7 +6,6 @@
 #include <tuple>
 #include <iomanip>
 #include <thread>
-#include <chrono>
 #include <random>
 
 // ambition includes should be done like this, using <>
@@ -21,6 +20,8 @@
 #include <ambition/ByteBuffer.hpp>
 #include <ambition/GPUCache.hpp>
 #include <ambition/TerrainManager.hpp>
+#include <ambition/Chrono.hpp>
+
 
 #include "loadOBJ.hpp"
 #include "loadBitmap.hpp"
@@ -366,11 +367,33 @@ void display(int w, int h) {
 	
 }
 
+template <typename ClockT>
+void testClock(const string &name) {
+	auto time0 = ClockT::now();
+	auto time1 = time0;
+	while (time0 == time1) {
+		time1 = ClockT::now();
+	}
+	auto time2 = time1;
+	int calls = 0;
+	while (time1 == time2) {
+		time2 = ClockT::now();
+		calls++;
+	}
+
+	log(name) << "Interval: " << chrono::duration_cast<chrono::duration<double>>(time2 - time1).count();
+	log(name) << "Calls: " << calls;
+}
+
 
 int main(void) {
 	log("System") % 0 << "Starting...";
 
 	AsyncExecutor::start();
+
+	testClock<chrono::steady_clock>("SteadyClock");
+	testClock<chrono::high_resolution_clock>("HRClock");
+	testClock<really_high_resolution_clock>("RHRClock");
 	
 	shaderman = new ShaderManager("./res/shader");
 
