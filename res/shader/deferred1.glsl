@@ -16,6 +16,8 @@
 // fragment shader
 #ifdef _FRAGMENT_
 
+uniform uint show_overdraw;
+
 uniform float noise_time;
 uniform float dither;
 
@@ -30,6 +32,7 @@ uniform sampler2D sampler_z;
 uniform sampler2D sampler_normal;
 uniform sampler2D sampler_diffuse;
 uniform sampler2D sampler_l0;
+uniform usampler2D sampler_stencil;
 
 // light (sun) and planet positions
 uniform vec3 light_norm_v;
@@ -98,6 +101,10 @@ void main() {
 	float junk = fract(sin(dot(gl_FragCoord.xy + noise_time, vec2(12.9898, 78.233))) * 43758.5453);
 
 	frag_color = vec4(hdr(l) + vec3((junk - 0.5) / dither), 1.0);
+
+	if (texture(sampler_stencil, texCoord).r >= show_overdraw) {
+		frag_color = vec4(1.0 - frag_color.rgb, 1.0);
+	}
 
 }
 

@@ -62,6 +62,9 @@ quatd sun_ori = quatd::axisangle(vec3d::i(), math::pi() / 2);
 
 double dither = 127.0;
 
+unsigned show_overdraw = ~0;
+bool show_overdraw_zpass_only = false;
+
 
 // block on user input until all currently loaded shaders have been successfully reloaded
 void reload_shaders() {
@@ -283,10 +286,19 @@ void display(int w, int h) {
 
 	// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	glEnable(GL_CULL_FACE);
+	glCullFace(GL_BACK);
+
+	glEnable(GL_STENCIL_TEST);
+	glStencilFunc(GL_ALWAYS, 0, 0);
+	glStencilOp(GL_KEEP, show_overdraw_zpass_only ? GL_KEEP : GL_INCR, GL_INCR);
+	glClearStencil(0);
+	glClear(GL_STENCIL_BUFFER_BIT);
 	
 	if (true) {
 		sr.getDrawQueue().execute(shaderman);
 	}
+
+	glDisable(GL_STENCIL_TEST);
 
 	glDisable(GL_CULL_FACE);
 	// glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -297,7 +309,7 @@ void display(int w, int h) {
 	checkGL();
 
 	// bind textures for deferred shading etc
-	enum { tu_z = 0, tu_normal, tu_diffuse, tu_l0 };
+	enum { tu_z = 0, tu_normal, tu_diffuse, tu_l0, tu_stencil };
 	glActiveTexture(GL_TEXTURE0 + tu_z);
 	glBindTexture(GL_TEXTURE_2D, tex_scene_z);
 	glActiveTexture(GL_TEXTURE0 + tu_normal);
@@ -306,6 +318,8 @@ void display(int w, int h) {
 	glBindTexture(GL_TEXTURE_2D, tex_scene_diffuse);
 	glActiveTexture(GL_TEXTURE0 + tu_l0);
 	glBindTexture(GL_TEXTURE_2D, tex_scene_l0);
+	glActiveTexture(GL_TEXTURE0 + tu_stencil);
+	glBindTexture(GL_TEXTURE_2D, tex_scene_depth);
 
 	//
 	// deferred shading
@@ -322,6 +336,7 @@ void display(int w, int h) {
 	// run shader
 	GLuint prog_def1 = shaderman->getProgram("deferred1.glsl");
 	glUseProgram(prog_def1);
+	glUniform1ui(glGetUniformLocation(prog_def1, "show_overdraw"), show_overdraw);
 	glUniform1f(glGetUniformLocation(prog_def1, "dither"), dither);
 	glUniform1f(glGetUniformLocation(prog_def1, "noise_time"), fmod(glfwGetTime(), 1.0));
 	glUniform3fv(glGetUniformLocation(prog_def1, "light_l"), 1, vec3f(sun_radiance));
@@ -329,6 +344,7 @@ void display(int w, int h) {
 	glUniform1i(glGetUniformLocation(prog_def1, "sampler_normal"), tu_normal);
 	glUniform1i(glGetUniformLocation(prog_def1, "sampler_diffuse"), tu_diffuse);
 	glUniform1i(glGetUniformLocation(prog_def1, "sampler_l0"), tu_l0);
+	glUniform1i(glGetUniformLocation(prog_def1, "sampler_stencil"), tu_stencil);
 	glUniform1f(glGetUniformLocation(prog_def1, "zfar"), zfar);
 	glUniform1f(glGetUniformLocation(prog_def1, "exposure"), exposure);
 	glUniform3fv(glGetUniformLocation(prog_def1, "light_norm_v"), 1, (view_matrix * vec4d(sun_ori * vec3d::k(-1), 0)).xyz<float>());
@@ -424,6 +440,8 @@ int main(void) {
 	
 	glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
+	checkExtension("GL_ARB_stencil_texturing");
+
 	initSceneFB(window->size());
 	
 	window->onResize.attach([](const window_size_event &e) {
@@ -449,6 +467,22 @@ int main(void) {
 		}
 		if (e.key == GLFW_KEY_P) {
 			sun_moving = !sun_moving;
+		}
+		if (e.key == GLFW_KEY_COMMA) {
+			show_overdraw--;
+			cout << "showing overdraw >= " << show_overdraw << endl;
+		}
+		if (e.key == GLFW_KEY_PERIOD) {
+			show_overdraw++;
+			cout << "showing overdraw >= " << show_overdraw << endl;
+		}
+		if (e.key == GLFW_KEY_SLASH) {
+			show_overdraw_zpass_only = !show_overdraw_zpass_only;
+			if (show_overdraw_zpass_only) {
+				cout << "showing overdraw zpass" << endl;
+			} else {
+				cout << "showing overdraw zpass & zfail" << endl;
+			}
 		}
 		return false;
 	});
