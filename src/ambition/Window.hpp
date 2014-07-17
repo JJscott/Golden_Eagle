@@ -33,7 +33,9 @@ namespace ambition {
 	}
 	
 	inline void checkFB() {
-		if (glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+		GLenum err = glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER);
+		if (err != GL_FRAMEBUFFER_COMPLETE) {
+			log("GL").error() << "Framebuffer status: (" << err << ")" << gluErrorString(err);
 			log("GL").error() << "YOU BROKE THE FRAMEBUFFER!";
 			throw std::runtime_error("OH NOES! THE FRAMEBUFFER IS BROKED");
 		}

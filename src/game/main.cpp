@@ -92,11 +92,27 @@ void initSceneFB(size2i size) {
 	
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	checkGL();
+
+	std::cout << "LINE: " << __LINE__ << std::endl;
+	checkFB();
+	std::cout << "LINE: " << __LINE__ << std::endl;
 	
 	// make new scene framebuffer
+	GLenum glErr;
+	glErr = glGetError();
+	std::cout << "LINE: " << __LINE__ << ", GLERR: " << glErr << std::endl;
 	if (fbo_scene) glDeleteFramebuffers(1, &fbo_scene);
+	std::cout << "LINE: " << __LINE__ << ", GLERR: " << glErr << std::endl;
 	glGenFramebuffers(1, &fbo_scene);
+	std::cout << "LINE: " << __LINE__ << ", GLERR: " << glErr << std::endl;
+
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo_scene);
+
+	std::cout << "LINE: " << __LINE__ << ", GLERR: " << glErr << std::endl;
+
+	std::cout << "LINE: " << __LINE__ << std::endl;
+	checkFB();
+	std::cout << "LINE: " << __LINE__ << std::endl;
 	
 	// delete existing textures
 	if (tex_scene_depth) glDeleteTextures(1, &tex_scene_depth);
@@ -165,11 +181,17 @@ void initSceneFB(size2i size) {
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, size.w, size.h, 0, GL_RGBA, GL_FLOAT, nullptr);
 	glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, tex_scene_l0, 0);
 	checkGL();
+
+	std::cout << "LINE: " << __LINE__ << std::endl;
+	checkFB();
+	std::cout << "LINE: " << __LINE__ << std::endl;
 	
 	// set up draw buffers and check fbo
 	GLenum bufs_scene[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3 };
 	glDrawBuffers(4, bufs_scene);
+	std::cout << "LINE: " << __LINE__ << std::endl;
 	checkFB();
+	std::cout << "LINE: " << __LINE__ << std::endl;
 	
 	glBindTexture(GL_TEXTURE_2D, 0);
 	
@@ -240,7 +262,9 @@ void display(int w, int h) {
 	
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo_scene);
 	glViewport(0, 0, size_fbo_scene.w, size_fbo_scene.h);
+	std::cout << "LINE: " << __LINE__ << std::endl;
 	checkFB();
+	std::cout << "LINE: " << __LINE__ << std::endl;
 	checkGL();
 	
 	// begin scene background
@@ -330,7 +354,9 @@ void display(int w, int h) {
 	glDrawBuffer(GL_BACK);
 	glViewport(0, 0, w, h);
 	glDisable(GL_DEPTH_TEST);
+	std::cout << "LINE: " << __LINE__ << std::endl;
 	checkFB();
+	std::cout << "LINE: " << __LINE__ << std::endl;
 	checkGL();
 	
 	// run shader

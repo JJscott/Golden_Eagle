@@ -13,7 +13,7 @@ set_target_properties(
 )
 
 # list libs that must be linked with ambition
-list(APPEND AMBITION_LIBRARIES_impl glew glfw ${GLFW_LIBRARIES} cryptopp ${CRYPTOPP_LIBRARIES})
+list(APPEND AMBITION_LIBRARIES_impl glew glfw ${GLFW_LIBRARIES} ${OPENGL_glu_LIBRARY} cryptopp ${CRYPTOPP_LIBRARIES})
 if(WIN32)
 	list(APPEND AMBITION_LIBRARIES_impl wsock32 ws2_32)
 endif()

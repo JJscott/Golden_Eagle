@@ -241,6 +241,8 @@ namespace ambition {
 			log("Window") % 0 << "GLEW initialising...";
 			glewExperimental = true;
 			GLenum glew_err = glewInit();
+			GLenum t_err = glGetError();
+			log("Window") << "GLEW t_err: " << t_err;
 			log("Window") << "GLEW initialisation returned " << glew_err;
 			if (glew_err != GLEW_OK) {
 				log("Window").error() << "GLEW initialisation failed: " << glewGetErrorString(glew_err);
@@ -250,6 +252,7 @@ namespace ambition {
 			// clear any GL error from glew init
 			GLenum gl_err = glGetError();
 			log("Window") << "GLEW initialistion left GL error " << gl_err;
+			log("Window") << "GL Error: " << gluErrorString(gl_err);
 			log("Window") << "GL version string: " << glGetString(GL_VERSION);
 			log("Window") % 0 << "GLEW initialised";
 			m_glew_init_done = true;
@@ -289,6 +292,8 @@ namespace ambition {
 		log("Window") % 0 << "GLFW creating window... [title=" << m_title << "]";
 		init_glfw();
 		glfwDefaultWindowHints();
+		GLenum gl_err = glGetError();
+		log("Window") % 0 << "GLerror: " << gl_err;
 		for (auto me : m_hints) {
 			glfwWindowHint(me.first, me.second);
 		}
